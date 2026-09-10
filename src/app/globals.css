@@ -1,0 +1,91 @@
+@import "tailwindcss";
+
+/* Tokens de marca Saboratto (de WebSaboratto/src/style.css) + semáforo de la cola */
+@theme {
+  --color-marca: #f97316;
+  --color-marca-claro: #fb923c;
+  --color-marca-oscuro: #ea580c;
+
+  --color-fondo: #0b0b0d;
+  --color-panel: #18181b;
+  --color-panel-2: #232327;
+  --color-borde: #2e2e33;
+  --color-texto: #f4f4f5;
+  --color-texto-suave: #a1a1aa;
+  --color-texto-dim: #71717a;
+
+  --color-semaforo-verde: #22c55e;
+  --color-semaforo-amarillo: #facc15;
+  --color-semaforo-naranja: #f97316;
+
+  --color-ok: #16a34a;
+  --color-editar: #3b82f6;
+  --color-peligro: #ef4444;
+  --color-whatsapp: #25d366;
+
+  --font-sans: "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+
+  --animate-pulso-suave: pulso-suave 1.6s ease-in-out infinite;
+  @keyframes pulso-suave {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.45); }
+    50% { box-shadow: 0 0 0 8px rgba(249, 115, 22, 0); }
+  }
+}
+
+html {
+  color-scheme: dark;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background: var(--color-fondo);
+  color: var(--color-texto);
+  font-family: var(--font-sans);
+  overscroll-behavior-y: none;
+  touch-action: manipulation; /* evita zoom por doble toque en la tablet */
+}
+
+button, input, select, textarea {
+  font: inherit;
+}
+
+/* Botón base grande para pantallas táctiles */
+@utility btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 3rem;
+  padding: 0.625rem 1rem;
+  border-radius: 0.875rem;
+  font-weight: 700;
+  line-height: 1.1;
+  user-select: none;
+  transition: transform 80ms ease, filter 120ms ease, background-color 120ms ease;
+  &:active { transform: scale(0.97); filter: brightness(1.1); }
+  &:disabled { opacity: 0.45; pointer-events: none; }
+}
+
+@utility tarjeta {
+  background: var(--color-panel);
+  border: 1px solid var(--color-borde);
+  border-radius: 1.25rem;
+}
+
+@utility campo {
+  width: 100%;
+  min-height: 3rem;
+  padding: 0.625rem 0.875rem;
+  border-radius: 0.875rem;
+  background: var(--color-panel-2);
+  border: 1px solid var(--color-borde);
+  color: var(--color-texto);
+  outline: none;
+  &:focus { border-color: var(--color-marca); box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.25); }
+  &::placeholder { color: var(--color-texto-dim); }
+}
+
+/* Scroll interno discreto */
+.scroll-fino::-webkit-scrollbar { width: 8px; height: 8px; }
+.scroll-fino::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 8px; }
