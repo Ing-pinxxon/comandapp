@@ -50,6 +50,7 @@ export function Dashboard() {
         <GraficaBarrasSimple titulo="Top 10 productos (unidades)" datos={top.map((t) => ({ etiqueta: t.nombre, valor: t.unidades }))} horizontal color="#f97316" />
         <GraficaTorta titulo="Hamburguesas: combo vs sin combo" datos={A.combosVsSinCombo(pedidos)} />
         <GraficaTorta titulo="Ventas por método de pago" datos={A.porMetodoPago(pedidos)} esDinero />
+        <GraficaTorta titulo="Pedidos por origen: bot vs a mano" datos={A.porOrigen(pedidos)} />
         <GraficaBarrasSimple titulo="Ingredientes más quitados" datos={A.ingredientesQuitados(pedidos)} horizontal color="#ef4444" />
         <GraficaBarrasSimple titulo="Tiempo promedio de entrega por hora (min)" datos={A.tiempoEntregaPorHora(pedidos)} color="#3b82f6" sufijo=" min" />
         <GraficaBarrasSimple titulo="Motivos de cancelación" datos={A.motivosCancelacion(pedidos)} horizontal color="#a855f7" />

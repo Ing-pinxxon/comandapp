@@ -20,10 +20,15 @@ interface Props {
   onReabrir?: () => void;
   /** Si viene, editar abre el formulario en la misma pantalla (sin navegar) */
   onEditar?: () => void;
+  /** Marca como revisado un pedido que trajo el bot */
+  onAprobar?: () => void;
 }
 
-export function TarjetaPedido({ pedido, ahora, config, ocupado, onEntregar, onCancelar, onReabrir, onEditar }: Props) {
+export function TarjetaPedido({ pedido, ahora, config, ocupado, onEntregar, onCancelar, onReabrir, onEditar, onAprobar }: Props) {
   const [menuWa, setMenuWa] = useState(false);
+  const [verOriginal, setVerOriginal] = useState(false);
+  const delBot = pedido.origen === "whatsapp";
+  const porRevisar = delBot && !pedido.revisado;
   const pendiente = pedido.estado === "pendiente";
   const minutos = pendiente ? minutosEntre(pedido.creado_en, ahora) : pedido.entregado_en ? minutosEntre(pedido.creado_en, pedido.entregado_en) : null;
   const nivel = nivelSemaforo(minutos ?? 0, config.umbrales_min);
@@ -38,11 +43,28 @@ export function TarjetaPedido({ pedido, ahora, config, ocupado, onEntregar, onCa
   const waCamino = urlWhatsApp(pedido.cliente_telefono, plantillaMensaje(config.mensajes_whatsapp.en_camino, datosMsg));
 
   return (
-    <article className={`relative flex flex-col rounded-2xl border-2 p-4 transition-colors ${estilo.tarjeta}`}>
+    <article className={`relative flex flex-col rounded-2xl border-2 p-4 transition-colors ${estilo.tarjeta} ${porRevisar ? "ring-2 ring-editar ring-offset-2 ring-offset-fondo" : ""}`}>
+      {/* Aviso de pedido traído por el bot y aún sin revisar */}
+      {porRevisar && (
+        <div className="mb-3 -mx-4 -mt-4 rounded-t-2xl bg-editar px-4 py-2 text-white">
+          <div className="flex items-center gap-2 text-sm font-extrabold">
+            <MessageCircle className="size-4" /> LLEGÓ POR WHATSAPP · REVISAR
+          </div>
+          <p className="mt-0.5 text-xs opacity-90">Compara los productos con lo que pidió el cliente antes de prepararlo.</p>
+        </div>
+      )}
+
       {/* Encabezado: número, minutos, estado */}
       <div className="flex items-start justify-between gap-2">
         <div>
-          <div className="text-3xl font-black leading-none">#{pedido.numero_dia}</div>
+          <div className="flex items-center gap-2">
+            <span className="text-3xl font-black leading-none">#{pedido.numero_dia}</span>
+            {delBot && !porRevisar && (
+              <span className="inline-flex items-center gap-1 rounded-md bg-whatsapp/20 px-1.5 py-0.5 text-xs font-bold text-whatsapp">
+                <MessageCircle className="size-3" /> WhatsApp
+              </span>
+            )}
+          </div>
           <div className="mt-1 text-xs text-texto-suave">Tomado {hora12(pedido.creado_en)}</div>
         </div>
         <div className="text-right">
@@ -108,6 +130,27 @@ export function TarjetaPedido({ pedido, ahora, config, ocupado, onEntregar, onCa
         </div>
         <div className="text-2xl font-black">{formatoCOP(pedido.total)}</div>
       </div>
+
+      {/* Texto original del bot, para comparar */}
+      {delBot && pedido.texto_original && (
+        <div className="mt-2">
+          <button type="button" onClick={() => setVerOriginal((v) => !v)} className="text-xs font-bold text-texto-suave underline">
+            {verOriginal ? "Ocultar" : "Ver"} lo que escribió el bot
+          </button>
+          {verOriginal && (
+            <pre className="mt-1 max-h-40 overflow-y-auto whitespace-pre-wrap rounded-lg bg-black/40 p-2 text-xs text-texto-suave">
+              {pedido.texto_original}
+            </pre>
+          )}
+        </div>
+      )}
+
+      {/* Aprobar lo que trajo el bot */}
+      {porRevisar && onAprobar && (
+        <button type="button" disabled={ocupado} onClick={onAprobar} className="btn mt-3 w-full bg-editar text-white">
+          <Check className="size-5" /> Está correcto, aprobar
+        </button>
+      )}
 
       {/* Acciones */}
       <div className="mt-3 grid grid-cols-4 gap-2">

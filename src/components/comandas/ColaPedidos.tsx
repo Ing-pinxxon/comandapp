@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { BarChart3, ChevronDown, ChevronUp, LogOut, Plus, RefreshCw } from "lucide-react";
 import type { PedidoConItems, Rol } from "@/lib/tipos";
-import { cambiarEstado, cargarCatalogo, cargarPedidosHoy, cerrarSesion, mensajeError, suscribirPedidos } from "@/lib/datos";
+import { aprobarPedido, cambiarEstado, cargarCatalogo, cargarPedidosHoy, cerrarSesion, mensajeError, suscribirPedidos } from "@/lib/datos";
 import type { Catalogo } from "@/lib/catalogo";
 import { fechaISOBogota, hora12 } from "@/lib/fechas";
 import { TarjetaPedido } from "./TarjetaPedido";
@@ -95,6 +95,7 @@ export function ColaPedidos({ inicial, catalogoInicial, rol, demo = false }: Pro
   const entregados = useMemo(() => pedidos.filter((p) => p.estado === "entregado" && p.dia_negocio === hoy).sort((a, b) => (b.entregado_en ?? "").localeCompare(a.entregado_en ?? "")), [pedidos, hoy]);
   const cancelados = useMemo(() => pedidos.filter((p) => p.estado === "cancelado" && p.dia_negocio === hoy).sort((a, b) => (b.cancelado_en ?? "").localeCompare(a.cancelado_en ?? "")), [pedidos, hoy]);
   const ventasHoy = entregados.reduce((s, p) => s + p.total, 0);
+  const porRevisar = pendientes.filter((p) => p.origen === "whatsapp" && !p.revisado).length;
 
   async function marcar(pedido: PedidoConItems, estado: "entregado" | "cancelado" | "pendiente", motivo?: string) {
     const anterior = pedidos;
@@ -131,6 +132,20 @@ export function ColaPedidos({ inicial, catalogoInicial, rol, demo = false }: Pro
     }
   }
 
+  async function aprobar(pedido: PedidoConItems) {
+    const anterior = pedidos;
+    // La marca azul desaparece de inmediato; si falla, vuelve.
+    setPedidos((lista) => lista.map((p) => (p.id === pedido.id ? { ...p, revisado: true, revisado_en: new Date().toISOString() } : p)));
+    setError(null);
+    if (demo) return;
+    try {
+      await aprobarPedido(pedido.id);
+    } catch (e) {
+      setPedidos(anterior);
+      setError(`No se pudo aprobar el pedido #${pedido.numero_dia}. ${mensajeError(e)}`);
+    }
+  }
+
   async function salir() {
     await cerrarSesion();
     router.replace("/login");
@@ -151,6 +166,11 @@ export function ColaPedidos({ inicial, catalogoInicial, rol, demo = false }: Pro
 
         <div className="ml-2 hidden items-center gap-2 text-sm sm:flex">
           <Indicador etiqueta="En cola" valor={pendientes.length} destacado />
+          {porRevisar > 0 && (
+            <span className="rounded-xl bg-editar px-3 py-1.5 text-white">
+              <span className="text-xs uppercase tracking-wide">Por revisar</span> <span className="text-base font-black">{porRevisar}</span>
+            </span>
+          )}
           <Indicador etiqueta="Entregados" valor={entregados.length} />
           <Indicador etiqueta="Ventas hoy" valor={"$" + ventasHoy.toLocaleString("es-CO")} />
         </div>
@@ -196,6 +216,7 @@ export function ColaPedidos({ inicial, catalogoInicial, rol, demo = false }: Pro
                 onEntregar={() => void marcar(p, "entregado")}
                 onCancelar={() => setACancelar(p)}
                 onEditar={() => setComposicion({ modo: "editar", pedido: p })}
+                onAprobar={() => void aprobar(p)}
               />
             ))}
           </section>

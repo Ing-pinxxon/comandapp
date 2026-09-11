@@ -21,6 +21,7 @@ Sistema de comandas para Saboratto: toma de pedidos manual, cola con semáforo d
    2. `supabase/02_policies.sql`
    3. `supabase/03_seed.sql`
    4. `supabase/04_realtime.sql`
+   5. `supabase/05_integracion_bot.sql` (para que entren los pedidos del bot de WhatsApp)
 3. **Authentication → Providers → Email:** deja activo *Email* y **desactiva "Confirm email"**.
    En **Authentication → Sign In / Providers** (o *Settings*), **desactiva "Allow new users to sign up"** para que nadie pueda registrarse por su cuenta.
 4. **Authentication → Users → Add user → Create new user**, crea dos usuarios (marca *Auto Confirm User*):
@@ -81,7 +82,30 @@ Con el servidor prendido en el PC, entra desde la tablet a `http://IP-DEL-PC:300
 3. En **Environment Variables** agrega `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
 4. Deploy. Abre la URL en la tablet y agrégala a la pantalla de inicio (se comporta como app).
 
-## 6. Estructura
+## 6. Conectar el bot de WhatsApp
+
+Cuando un cliente le confirma un pedido al bot, ese pedido aparece solo en la pantalla de comandas, marcado en azul como **"Llegó por WhatsApp · Revisar"**. El personal compara los productos, toca **Está correcto, aprobar** y la marca desaparece. Si algo quedó mal, se corrige con el botón de editar, que también lo da por revisado.
+
+Para activarlo:
+
+1. En Supabase, ejecuta `supabase/05_integracion_bot.sql` si aún no lo hiciste.
+2. En Supabase ve a **Project Settings → API** y copia la clave **`service_role`** (la secreta, *no* la `anon`).
+3. En Railway, en el proyecto del bot, ve a **Variables** y agrega:
+
+   | Variable | Valor |
+   |---|---|
+   | `COMANDAS_SUPABASE_URL` | la misma URL del proyecto (`https://....supabase.co`) |
+   | `COMANDAS_SERVICE_KEY` | la clave `service_role` |
+
+4. Railway reinicia el bot solo. Listo.
+
+> ⚠️ La clave `service_role` da control total sobre la base de datos. Va únicamente en las variables de Railway; nunca en el código, ni en la app de comandas, ni en un repositorio.
+
+Si esas dos variables no están configuradas, el bot sigue funcionando exactamente igual que antes y solo deja un aviso en sus registros. Nada se rompe.
+
+**Cómo lo arma el bot:** cuando el cliente acepta, el bot le pide a Gemini que traduzca su propio resumen a una lista de productos, usando únicamente nombres del menú real. Los precios **siempre** se toman de la base de datos, nunca de lo que calculó la IA. Si el bot menciona algo que no está en el menú, entra como producto suelto con el precio que indicó. El texto original queda guardado y se puede ver desde la tarjeta con **Ver lo que escribió el bot**.
+
+## 7. Estructura
 
 ```
 supabase/            Scripts SQL (esquema, políticas RLS, datos iniciales, realtime)

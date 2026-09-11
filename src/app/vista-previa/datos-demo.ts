@@ -57,6 +57,10 @@ function pedido(id: number, numero: number, minutos: number, nombre: string, tel
     notas: null,
     estado: "pendiente",
     motivo_cancelacion: null,
+    origen: "manual",
+    revisado: true,
+    revisado_en: null,
+    texto_original: null,
     creado_en: hace(minutos),
     entregado_en: null,
     cancelado_en: null,
@@ -85,6 +89,22 @@ export const pedidosDemo: PedidoConItems[] = [
   pedido(2, 2, 19, "Ana María Ruiz", "3109876543", [item("Perro Caliente Especial", "Perros", 13000, 2, { exclusiones: ["Cebolla Saboratto"] }), item("Salchipapa Tradicional", "Salchipapas", 10000)]),
   pedido(3, 3, 7, "Julián Torres", "3205551212", [item("Hamburguesa Tradicional", "Hamburguesas", 11500, 1, { exclusiones: ["Tomate", "Lechuga"], nota: "bien asada" }), item("Porción de papas", "Adicionales", 4000)], { notas: "Timbrar dos veces", metodo_pago: "daviplata" }),
   pedido(4, 4, 2, "Laura P.", "3157778899", [item("Sándwich con carne de hamburguesa", "Sándwiches", 12000), item("Coca-Cola Cero 400ml", "Bebidas", 3000, 1, { es_personalizado: true })], { es_domicilio: false }),
-  pedido(5, 5, 55, "Pedro Díaz", "3012223344", [item("Salchipapa Doble", "Salchipapas", 22000)], { estado: "entregado", entregado_en: hace(20) }),
+  // Pedido traído por el bot de WhatsApp, todavía sin revisar
+  pedido(
+    7,
+    5,
+    4,
+    "Sandra Milena",
+    "3126667788",
+    [item("Hamburguesa Especial", "Hamburguesas", 21000, 2, { es_combo: true }), item("Perro Caliente Ranchero", "Perros", 13000)],
+    {
+      origen: "whatsapp",
+      revisado: false,
+      metodo_pago: "nequi",
+      texto_original:
+        "Listo 😎 te confirmo:\n\n• 2 Combos de hamburguesa especial 🍔 - $42.000\n  (incluye papas y gaseosa en cada uno)\n\n• 1 Perro ranchero 🌭 - $13.000\n\nSubtotal: $55.000\nIcopor: $500 (1 perro)\nDomicilio: $1.000\n**Total: $56.500**\n\n¿Me confirmas? ✅",
+    },
+  ),
+  pedido(5, 6, 55, "Pedro Díaz", "3012223344", [item("Salchipapa Doble", "Salchipapas", 22000)], { estado: "entregado", entregado_en: hace(20) }),
   pedido(6, 6, 40, "Sin nombre", "", [item("Perro Caliente Tradicional", "Perros", 9000)], { estado: "cancelado", cancelado_en: hace(35), motivo_cancelacion: "Cliente no contesta" }),
 ];

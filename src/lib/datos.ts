@@ -76,6 +76,13 @@ export async function guardarPedido(pedido: PedidoEntrada, items: ItemEntrada[])
   return Number(data);
 }
 
+/** Marca como revisado un pedido que trajo el bot de WhatsApp */
+export async function aprobarPedido(id: number): Promise<void> {
+  const sb = supabaseNavegador();
+  const { error } = await sb.rpc("aprobar_pedido", { p_id: id });
+  if (error) throw new Error(mensajeError(error));
+}
+
 export async function cambiarEstado(id: number, estado: EstadoPedido, motivo?: string): Promise<void> {
   const sb = supabaseNavegador();
   const { error } = await sb.rpc("cambiar_estado", { p_id: id, p_estado: estado, p_motivo: motivo ?? null });

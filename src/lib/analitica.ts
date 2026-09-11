@@ -126,6 +126,20 @@ export function combosVsSinCombo(pedidos: PedidoConItems[], categoriaCombo = "Ha
   ];
 }
 
+/** Cuánto entra por el bot de WhatsApp frente a lo tomado a mano */
+export function porOrigen(pedidos: PedidoConItems[]): SerieDoble[] {
+  const acum = new Map<string, SerieDoble>([
+    ["Tomado a mano", { etiqueta: "Tomado a mano", pedidos: 0, ventas: 0 }],
+    ["Bot de WhatsApp", { etiqueta: "Bot de WhatsApp", pedidos: 0, ventas: 0 }],
+  ]);
+  for (const p of vendidos(pedidos)) {
+    const fila = acum.get(p.origen === "whatsapp" ? "Bot de WhatsApp" : "Tomado a mano")!;
+    fila.pedidos += 1;
+    fila.ventas += p.total;
+  }
+  return [...acum.values()];
+}
+
 export function porMetodoPago(pedidos: PedidoConItems[]): SerieDoble[] {
   const acum = new Map<string, SerieDoble>();
   for (const p of vendidos(pedidos)) {

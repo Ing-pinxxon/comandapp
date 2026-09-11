@@ -3,6 +3,7 @@
 export type Rol = "admin" | "personal";
 export type MetodoPago = "efectivo" | "nequi" | "daviplata" | "breb" | "otro";
 export type EstadoPedido = "pendiente" | "entregado" | "cancelado";
+export type OrigenPedido = "manual" | "whatsapp";
 export type NivelSemaforo = "verde" | "amarillo" | "naranja";
 
 export interface Categoria {
@@ -85,6 +86,13 @@ export interface Pedido {
   notas: string | null;
   estado: EstadoPedido;
   motivo_cancelacion: string | null;
+  /** De dónde vino el pedido: tomado a mano o traído por el bot de WhatsApp */
+  origen: OrigenPedido;
+  /** Los del bot llegan en false hasta que el personal los aprueba */
+  revisado: boolean;
+  revisado_en: string | null;
+  /** Resumen tal cual lo escribió el bot, para comparar si algo se ve raro */
+  texto_original: string | null;
   creado_en: string;
   entregado_en: string | null;
   cancelado_en: string | null;
