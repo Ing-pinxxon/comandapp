@@ -1,22 +1,78 @@
-// Tipos compartidos de la base de datos (espejo de supabase/01_schema.sql)
+// Tipos compartidos de la base de datos (espejo de supabase/01…06_*.sql)
 
-export type Rol = "admin" | "personal";
 export type MetodoPago = "efectivo" | "nequi" | "daviplata" | "breb" | "otro";
 export type EstadoPedido = "pendiente" | "entregado" | "cancelado";
 export type OrigenPedido = "manual" | "whatsapp";
 export type NivelSemaforo = "verde" | "amarillo" | "naranja";
+export type TipoCargo = "por_unidad_categoria" | "por_pedido";
+
+// ---------- Negocio y equipo ----------
+
+export interface Negocio {
+  id: string;
+  nombre: string;
+  slug: string;
+  logo_url: string | null;
+  telefono_whatsapp: string | null;
+  moneda: string;
+  zona_horaria: string;
+  combo_descripcion: string;
+  clave_integracion: string;
+  activo: boolean;
+  creado_por: string | null;
+  creado_en: string;
+}
+
+/** Empleado tal como lo ve la app (nunca incluye el PIN) */
+export interface Empleado {
+  id: string;
+  negocio_id: string;
+  nombre: string;
+  es_dueno: boolean;
+  activo: boolean;
+  creado_en: string;
+}
+
+/** Empleado identificado con PIN en esta tablet (se guarda en cookie) */
+export interface EmpleadoActual {
+  id: string;
+  nombre: string;
+  es_dueno: boolean;
+  desde: string; // ISO: cuándo escribió el PIN
+}
+
+export interface Cargo {
+  id: number;
+  negocio_id: string;
+  nombre: string;
+  tipo: TipoCargo;
+  valor: number;
+  categorias: number[]; // ids de categorías (solo por_unidad_categoria)
+  solo_domicilio: boolean;
+  activo: boolean;
+  orden: number;
+}
+
+/** Cargo aplicado a un pedido concreto (snapshot guardado en pedidos.cargos) */
+export interface CargoAplicado {
+  nombre: string;
+  valor: number;
+}
+
+// ---------- Catálogo ----------
 
 export interface Categoria {
   id: number;
+  negocio_id: string;
   nombre: string;
   emoji: string;
   orden: number;
-  lleva_icopor: boolean;
   permite_combo: boolean;
 }
 
 export interface Producto {
   id: number;
+  negocio_id: string;
   categoria_id: number;
   nombre: string;
   precio: number;
@@ -39,22 +95,53 @@ export interface MensajesWhatsApp {
 
 export interface Configuracion {
   umbrales_min: Umbrales;
-  costo_domicilio: number;
-  costo_icopor: number;
   extra_combo: number;
   mensajes_whatsapp: MensajesWhatsApp;
 }
 
 export const CONFIG_DEFAULT: Configuracion = {
   umbrales_min: { verde: 15, amarillo: 25 },
-  costo_domicilio: 1000,
-  costo_icopor: 500,
   extra_combo: 6000,
   mensajes_whatsapp: {
-    listo: "¡Hola {nombre}! 👋 Tu pedido #{numero} de Saboratto ya está listo 🍔✅",
-    en_camino: "¡Hola {nombre}! 👋 Tu pedido #{numero} de Saboratto va en camino 🛵 Total: {total}",
+    listo: "¡Hola {nombre}! 👋 Tu pedido #{numero} ya está listo ✅",
+    en_camino: "¡Hola {nombre}! 👋 Tu pedido #{numero} va en camino 🛵 Total: {total}",
   },
 };
+
+// ---------- Importación de menú por foto ----------
+
+export type EstadoImportacion = "procesando" | "listo" | "aplicado" | "error";
+
+export interface ProductoImportado {
+  nombre: string;
+  precio: number | null; // null = la IA no pudo leerlo; hay que completarlo
+  precio_combo?: number | null;
+  descripcion?: string | null;
+  ingredientes?: string[];
+}
+
+export interface CategoriaImportada {
+  nombre: string;
+  emoji?: string;
+  permite_combo?: boolean;
+  productos: ProductoImportado[];
+}
+
+export interface MenuImportado {
+  categorias: CategoriaImportada[];
+}
+
+export interface ImportacionMenu {
+  id: string;
+  negocio_id: string;
+  rutas_imagenes: string[];
+  estado: EstadoImportacion;
+  resultado: MenuImportado | null;
+  error: string | null;
+  creado_en: string;
+}
+
+// ---------- Pedidos ----------
 
 export interface PedidoItem {
   id?: number;
@@ -72,6 +159,8 @@ export interface PedidoItem {
 
 export interface Pedido {
   id: number;
+  negocio_id: string;
+  empleado_id: string | null;
   numero_dia: number;
   dia_negocio: string;
   cliente_nombre: string;
@@ -79,9 +168,8 @@ export interface Pedido {
   metodo_pago: MetodoPago;
   es_domicilio: boolean;
   subtotal: number;
-  unidades_icopor: number;
-  costo_icopor: number;
-  costo_domicilio: number;
+  cargos: CargoAplicado[];
+  total_cargos: number;
   total: number;
   notas: string | null;
   estado: EstadoPedido;
@@ -102,11 +190,15 @@ export interface Pedido {
 
 export interface PedidoConItems extends Pedido {
   pedido_items: PedidoItem[];
+  /** Nombre del empleado que lo tomó (join opcional) */
+  empleados?: { nombre: string } | null;
 }
 
 /** Datos que el formulario envía a la RPC guardar_pedido */
 export interface PedidoEntrada {
   id?: number;
+  negocio_id: string;
+  empleado_id: string | null;
   cliente_nombre: string;
   cliente_telefono: string;
   metodo_pago: MetodoPago;
@@ -133,4 +225,12 @@ export const MOTIVOS_CANCELACION = [
 
 export function etiquetaMetodoPago(valor: MetodoPago): string {
   return METODOS_PAGO.find((m) => m.valor === valor)?.etiqueta ?? valor;
+}
+
+/** Iniciales para mostrar cuando un negocio o producto no tiene imagen */
+export function iniciales(nombre: string): string {
+  const partes = nombre.trim().split(/\s+/).filter(Boolean);
+  if (partes.length === 0) return "?";
+  if (partes.length === 1) return partes[0].slice(0, 2).toUpperCase();
+  return (partes[0][0] + partes[1][0]).toUpperCase();
 }

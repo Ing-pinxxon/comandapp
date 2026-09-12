@@ -255,7 +255,7 @@ export function filasCSV(pedidos: PedidoConItems[]): string {
   const cab = [
     "pedido_id", "numero_dia", "dia_negocio", "hora", "estado", "cliente", "telefono", "metodo_pago",
     "domicilio", "producto", "categoria", "cantidad", "precio_unitario", "combo", "sin", "nota_item",
-    "subtotal_pedido", "icopor", "costo_domicilio", "total_pedido", "minutos_entrega", "motivo_cancelacion",
+    "subtotal_pedido", "cargos", "total_cargos", "total_pedido", "minutos_entrega", "motivo_cancelacion", "tomado_por",
   ];
   const filas = [cab.join(";")];
   for (const p of pedidos) {
@@ -267,7 +267,9 @@ export function filasCSV(pedidos: PedidoConItems[]): string {
           p.id, p.numero_dia, p.dia_negocio, `${String(hora).padStart(2, "0")}:${String(minuto).padStart(2, "0")}`,
           p.estado, p.cliente_nombre, p.cliente_telefono, p.metodo_pago, p.es_domicilio ? "si" : "no",
           i.nombre, i.categoria_nombre, i.cantidad, i.precio_unitario, i.es_combo ? "si" : "no",
-          i.exclusiones.join(", "), i.nota, p.subtotal, p.costo_icopor, p.costo_domicilio, p.total, minutos, p.motivo_cancelacion,
+          i.exclusiones.join(", "), i.nota, p.subtotal,
+          (p.cargos ?? []).map((c) => `${c.nombre} ${c.valor}`).join(" | "), p.total_cargos, p.total, minutos, p.motivo_cancelacion,
+          p.empleados?.nombre ?? "",
         ]
           .map(enc)
           .join(";"),

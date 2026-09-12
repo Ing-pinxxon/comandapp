@@ -2,10 +2,10 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Comandas Saboratto",
-  description: "Sistema de comandas y cola de pedidos de Saboratto",
-  applicationName: "Comandas Saboratto",
-  appleWebApp: { capable: true, title: "Comandas", statusBarStyle: "black-translucent" },
+  title: "Comandapp",
+  description: "Comandas y cola de pedidos para tu negocio de comida",
+  applicationName: "Comandapp",
+  appleWebApp: { capable: true, title: "Comandas", statusBarStyle: "default" },
 };
 
 export const viewport: Viewport = {
@@ -14,7 +14,7 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
   viewportFit: "cover",
-  themeColor: "#0b0b0d",
+  themeColor: "#f6f3ec",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

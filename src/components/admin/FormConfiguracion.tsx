@@ -1,21 +1,24 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Save } from "lucide-react";
+import { Save, SlidersHorizontal } from "lucide-react";
 import { supabaseNavegador } from "@/lib/supabase/client";
 import { cargarCatalogo, mensajeError } from "@/lib/datos";
 import type { Configuracion } from "@/lib/tipos";
 import { Aviso } from "@/components/ui/Aviso";
+import { useNegocio } from "@/components/NegocioProvider";
 
 export function FormConfiguracion() {
+  const { negocio } = useNegocio();
   const [cfg, setCfg] = useState<Configuracion | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [ok, setOk] = useState(false);
   const [guardando, setGuardando] = useState(false);
 
   useEffect(() => {
-    cargarCatalogo().then((c) => setCfg(c.config)).catch((e) => setError(mensajeError(e)));
-  }, []);
+    cargarCatalogo(negocio.id).then((c) => setCfg(c.config)).catch((e) => setError(mensajeError(e)));
+  }, [negocio.id]);
 
   async function guardar() {
     if (!cfg) return;
@@ -27,12 +30,10 @@ export function FormConfiguracion() {
     setError(null);
     const filas = [
       { clave: "umbrales_min", valor: cfg.umbrales_min },
-      { clave: "costo_domicilio", valor: cfg.costo_domicilio },
-      { clave: "costo_icopor", valor: cfg.costo_icopor },
       { clave: "extra_combo", valor: cfg.extra_combo },
       { clave: "mensajes_whatsapp", valor: cfg.mensajes_whatsapp },
-    ].map((f) => ({ ...f, actualizado_en: new Date().toISOString() }));
-    const { error } = await supabaseNavegador().from("configuracion").upsert(filas, { onConflict: "clave" });
+    ].map((f) => ({ ...f, negocio_id: negocio.id, actualizado_en: new Date().toISOString() }));
+    const { error } = await supabaseNavegador().from("configuracion").upsert(filas, { onConflict: "negocio_id,clave" });
     setGuardando(false);
     if (error) {
       setError(mensajeError(error));
@@ -70,13 +71,22 @@ export function FormConfiguracion() {
       </section>
 
       <section className="tarjeta space-y-3 p-4">
-        <h2 className="text-lg font-extrabold">Costos</h2>
-        <div className="grid gap-3 sm:grid-cols-3">
-          <label className="block"><span className="mb-1 block text-sm text-texto-suave">Domicilio ($)</span><input className="campo" inputMode="numeric" value={cfg.costo_domicilio} onChange={(e) => setCfg({ ...cfg, costo_domicilio: num(e.target.value) })} /></label>
-          <label className="block"><span className="mb-1 block text-sm text-texto-suave">Icopor por unidad ($)</span><input className="campo" inputMode="numeric" value={cfg.costo_icopor} onChange={(e) => setCfg({ ...cfg, costo_icopor: num(e.target.value) })} /></label>
-          <label className="block"><span className="mb-1 block text-sm text-texto-suave">Extra combo ($)</span><input className="campo" inputMode="numeric" value={cfg.extra_combo} onChange={(e) => setCfg({ ...cfg, extra_combo: num(e.target.value) })} /></label>
-        </div>
-        <p className="text-sm text-texto-suave">El icopor se cobra por cada perro y salchipapa (categorías marcadas con icopor). Las hamburguesas no llevan. No se aplican descuentos.</p>
+        <h2 className="text-lg font-extrabold">Combos y cargos</h2>
+        <label className="block sm:max-w-xs">
+          <span className="mb-1 block text-sm text-texto-suave">Extra por combo ($)</span>
+          <input className="campo" inputMode="numeric" value={cfg.extra_combo} onChange={(e) => setCfg({ ...cfg, extra_combo: num(e.target.value) })} />
+        </label>
+        <p className="text-sm text-texto-suave">
+          Se suma al precio cuando un producto de una categoría con combo se pide en combo y no tiene precio de combo propio.
+          Lo que incluye el combo se escribe en <Link href="/admin/negocio" className="underline">Mi negocio</Link>.
+        </p>
+        <p className="text-sm text-texto-suave">
+          Domicilio, empaques, propinas y otros recargos se definen en{" "}
+          <Link href="/admin/cargos" className="inline-flex items-center gap-1 font-bold underline">
+            <SlidersHorizontal className="size-4" /> Cargos
+          </Link>
+          . No se aplican descuentos.
+        </p>
       </section>
 
       <section className="tarjeta space-y-3 p-4">

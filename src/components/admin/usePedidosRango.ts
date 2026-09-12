@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { cargarPedidosRango, mensajeError } from "@/lib/datos";
+import { useNegocio } from "@/components/NegocioProvider";
 import { rangoPredefinido, type Rango, type RangoClave } from "@/lib/fechas";
 import type { PedidoConItems } from "@/lib/tipos";
 
@@ -38,14 +39,16 @@ export function useRangoURL() {
 
 /** Carga los pedidos del rango y los mantiene actualizados al cambiar el rango */
 export function usePedidosRango(rango: Rango) {
+  const { negocio } = useNegocio();
+  const negocioId = negocio.id;
   const [pedidos, setPedidos] = useState<PedidoConItems[]>([]);
   const [rangoCargado, setRangoCargado] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const claveRango = `${rango.desde}|${rango.hasta}`;
+  const claveRango = `${negocioId}|${rango.desde}|${rango.hasta}`;
 
   useEffect(() => {
     let vigente = true;
-    cargarPedidosRango(rango)
+    cargarPedidosRango(negocioId, rango)
       .then((p) => {
         if (!vigente) return;
         setPedidos(p);
@@ -56,16 +59,16 @@ export function usePedidosRango(rango: Rango) {
     return () => {
       vigente = false;
     };
-  }, [rango, claveRango]);
+  }, [rango, claveRango, negocioId]);
 
   const recargar = useCallback(async () => {
     try {
-      setPedidos(await cargarPedidosRango(rango));
+      setPedidos(await cargarPedidosRango(negocioId, rango));
       setError(null);
     } catch (e) {
       setError(mensajeError(e));
     }
-  }, [rango]);
+  }, [rango, negocioId]);
 
   return { pedidos, cargando: rangoCargado !== claveRango, error, recargar };
 }

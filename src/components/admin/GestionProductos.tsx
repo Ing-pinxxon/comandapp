@@ -1,9 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Eye, EyeOff, Plus, Save, Sparkles } from "lucide-react";
+import { Camera, Eye, EyeOff, FolderPlus, Plus, Save, Sparkles } from "lucide-react";
 import { supabaseNavegador } from "@/lib/supabase/client";
-import { cargarCatalogo, cargarPedidosRango, mensajeError } from "@/lib/datos";
+import { cargarCatalogo, cargarPedidosRango, crearCategoria, mensajeError } from "@/lib/datos";
+import { useNegocio } from "@/components/NegocioProvider";
 import type { Catalogo } from "@/lib/catalogo";
 import { productosPersonalizados, type ProductoTop } from "@/lib/analitica";
 import { fechaISOBogota, formatoCOP, sumarDias } from "@/lib/fechas";
@@ -20,28 +22,31 @@ interface Borrador {
 }
 
 export function GestionProductos() {
+  const { negocio } = useNegocio();
+  const negocioId = negocio.id;
   const [catalogo, setCatalogo] = useState<Catalogo | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [ok, setOk] = useState<string | null>(null);
   const [editando, setEditando] = useState<Record<number, Borrador>>({});
   const [nuevo, setNuevo] = useState<Borrador | null>(null);
+  const [nuevaCategoria, setNuevaCategoria] = useState<{ nombre: string; emoji: string; permite_combo: boolean } | null>(null);
   const [candidatos, setCandidatos] = useState<ProductoTop[]>([]);
 
   const recargar = useCallback(async () => {
     try {
       const hoy = fechaISOBogota();
-      const [cat, pedidos] = await Promise.all([cargarCatalogo(), cargarPedidosRango({ desde: sumarDias(hoy, -30), hasta: hoy })]);
+      const [cat, pedidos] = await Promise.all([cargarCatalogo(negocioId), cargarPedidosRango(negocioId, { desde: sumarDias(hoy, -30), hasta: hoy })]);
       setCatalogo(cat);
       setCandidatos(productosPersonalizados(pedidos));
     } catch (e) {
       setError(mensajeError(e));
     }
-  }, []);
+  }, [negocioId]);
 
   useEffect(() => {
     let vigente = true;
     const hoy = fechaISOBogota();
-    Promise.all([cargarCatalogo(), cargarPedidosRango({ desde: sumarDias(hoy, -30), hasta: hoy })])
+    Promise.all([cargarCatalogo(negocioId), cargarPedidosRango(negocioId, { desde: sumarDias(hoy, -30), hasta: hoy })])
       .then(([cat, pedidos]) => {
         if (!vigente) return;
         setCatalogo(cat);
@@ -51,7 +56,7 @@ export function GestionProductos() {
     return () => {
       vigente = false;
     };
-  }, []);
+  }, [negocioId]);
 
   const porCategoria = useMemo(() => {
     if (!catalogo) return [];
@@ -105,7 +110,7 @@ export function GestionProductos() {
     if (!nuevo || !nuevo.nombre.trim()) return;
     const datos = desdeBorrador(nuevo);
     const orden = (catalogo?.productos.filter((p) => p.categoria_id === datos.categoria_id).length ?? 0) + 1;
-    const { error } = await supabaseNavegador().from("productos").insert({ ...datos, orden });
+    const { error } = await supabaseNavegador().from("productos").insert({ ...datos, negocio_id: negocioId, orden });
     if (error) {
       setError(mensajeError(error));
       return;
@@ -115,15 +120,40 @@ export function GestionProductos() {
     avisarOk("Producto agregado al menú");
   }
 
+  async function crearCat() {
+    if (!nuevaCategoria || !nuevaCategoria.nombre.trim()) return;
+    try {
+      await crearCategoria(negocioId, nuevaCategoria.nombre, nuevaCategoria.emoji || "🍽️", nuevaCategoria.permite_combo);
+      setNuevaCategoria(null);
+      await recargar();
+      avisarOk("Categoría creada");
+    } catch (e) {
+      setError(mensajeError(e));
+    }
+  }
+
   if (!catalogo) return <p className="text-texto-suave">{error ?? "Cargando…"}</p>;
 
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-black">Productos</h1>
-        <button type="button" onClick={() => setNuevo({ nombre: "", precio: "", precio_combo: "", ingredientes: "", categoria_id: catalogo.categorias[0]?.id ?? 0 })} className="btn bg-marca text-black">
-          <Plus className="size-5" /> Nuevo producto
-        </button>
+        <h1 className="text-2xl font-black">Menú</h1>
+        <div className="flex flex-wrap gap-2">
+          <Link href="/admin/menu/importar" className="btn bg-panel-2">
+            <Camera className="size-5" /> Importar desde foto
+          </Link>
+          <button type="button" onClick={() => setNuevaCategoria({ nombre: "", emoji: "🍽️", permite_combo: false })} className="btn bg-panel-2">
+            <FolderPlus className="size-5" /> Nueva categoría
+          </button>
+          <button
+            type="button"
+            disabled={catalogo.categorias.length === 0}
+            onClick={() => setNuevo({ nombre: "", precio: "", precio_combo: "", ingredientes: "", categoria_id: catalogo.categorias[0]?.id ?? 0 })}
+            className="btn bg-marca text-black"
+          >
+            <Plus className="size-5" /> Nuevo producto
+          </button>
+        </div>
       </div>
       {error && <Aviso tipo="error">{error}</Aviso>}
       {ok && <Aviso tipo="ok">{ok}</Aviso>}
@@ -135,9 +165,7 @@ export function GestionProductos() {
         <section key={categoria.id} className="tarjeta overflow-x-auto p-4">
           <h2 className="mb-3 text-lg font-extrabold">
             {categoria.emoji} {categoria.nombre}
-            <span className="ml-2 text-xs font-normal text-texto-suave">
-              {categoria.lleva_icopor ? "· cobra icopor" : ""} {categoria.permite_combo ? "· permite combo" : ""}
-            </span>
+            <span className="ml-2 text-xs font-normal text-texto-suave">{categoria.permite_combo ? "· permite combo" : ""}</span>
           </h2>
           <table className="w-full text-sm">
             <thead className="text-left text-texto-suave">
@@ -156,7 +184,7 @@ export function GestionProductos() {
                   <tr key={p.id} className={`border-t border-borde ${!p.activo ? "opacity-50" : ""}`}>
                     <td className="py-2 pr-2">
                       {b ? <input className="campo min-h-10" value={b.nombre} onChange={(e) => setEditando({ ...editando, [p.id]: { ...b, nombre: e.target.value } })} /> : <span className="font-bold">{p.nombre}</span>}
-                      {p.agotado && <span className="ml-2 rounded-md bg-peligro/20 px-1.5 text-xs font-bold text-red-300">AGOTADO</span>}
+                      {p.agotado && <span className="ml-2 rounded-md bg-peligro/20 px-1.5 text-xs font-bold text-peligro">AGOTADO</span>}
                     </td>
                     <td className="pr-2 tabular-nums">
                       {b ? <input className="campo min-h-10" inputMode="numeric" value={b.precio} onChange={(e) => setEditando({ ...editando, [p.id]: { ...b, precio: e.target.value } })} /> : formatoCOP(p.precio)}
@@ -214,7 +242,7 @@ export function GestionProductos() {
                 <button
                   type="button"
                   onClick={() => setNuevo({ nombre: c.nombre, precio: String(Math.round(c.ventas / c.unidades)), precio_combo: "", ingredientes: "", categoria_id: catalogo.categorias.find((k) => k.nombre === c.categoria)?.id ?? catalogo.categorias[0].id })}
-                  className="btn min-h-10 bg-marca/20 px-3 text-marca-claro"
+                  className="btn min-h-10 bg-marca/20 px-3 text-marca-oscuro"
                 >
                   <Plus className="size-4" /> Al menú
                 </button>
@@ -237,6 +265,20 @@ export function GestionProductos() {
             <label className="block"><span className="mb-1 block text-sm text-texto-suave">Precio combo (opcional, solo hamburguesas)</span><input className="campo" inputMode="numeric" value={nuevo.precio_combo} onChange={(e) => setNuevo({ ...nuevo, precio_combo: e.target.value.replace(/\D/g, "") })} placeholder={`auto: precio + ${formatoCOP(catalogo.config.extra_combo)}`} /></label>
             <label className="block"><span className="mb-1 block text-sm text-texto-suave">Ingredientes que se pueden quitar (separados por coma)</span><input className="campo" value={nuevo.ingredientes} onChange={(e) => setNuevo({ ...nuevo, ingredientes: e.target.value })} placeholder="Queso, Cebolla Saboratto, Lechuga" /></label>
             <button type="submit" disabled={!nuevo.nombre.trim() || !nuevo.precio} className="btn w-full bg-marca text-black"><Plus className="size-5" /> Agregar al menú</button>
+          </form>
+        )}
+      </Modal>
+
+      <Modal abierto={Boolean(nuevaCategoria)} titulo="Nueva categoría" onCerrar={() => setNuevaCategoria(null)} ancho="sm">
+        {nuevaCategoria && (
+          <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); void crearCat(); }}>
+            <label className="block"><span className="mb-1 block text-sm text-texto-suave">Nombre *</span><input className="campo" value={nuevaCategoria.nombre} onChange={(e) => setNuevaCategoria({ ...nuevaCategoria, nombre: e.target.value })} placeholder="Ej: Postres" autoFocus /></label>
+            <label className="block"><span className="mb-1 block text-sm text-texto-suave">Emoji</span><input className="campo" value={nuevaCategoria.emoji} onChange={(e) => setNuevaCategoria({ ...nuevaCategoria, emoji: e.target.value })} maxLength={4} /></label>
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={nuevaCategoria.permite_combo} onChange={(e) => setNuevaCategoria({ ...nuevaCategoria, permite_combo: e.target.checked })} className="size-5" />
+              Los productos de esta categoría se pueden pedir en combo
+            </label>
+            <button type="submit" disabled={!nuevaCategoria.nombre.trim()} className="btn w-full bg-marca text-black"><FolderPlus className="size-5" /> Crear categoría</button>
           </form>
         )}
       </Modal>

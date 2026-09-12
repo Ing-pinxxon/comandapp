@@ -10,8 +10,8 @@ interface Props {
 
 export function Aviso({ tipo, children, className = "" }: Props) {
   const estilos = {
-    error: "border-peligro/50 bg-peligro/10 text-red-200",
-    ok: "border-ok/50 bg-ok/10 text-green-200",
+    error: "border-peligro/50 bg-peligro/10 text-peligro",
+    ok: "border-ok/50 bg-ok/10 text-ok",
     info: "border-borde bg-panel-2 text-texto-suave",
   };
   return (

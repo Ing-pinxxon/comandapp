@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { ArrowLeft, Bike, Save, ShoppingBag, Sparkles, Store, UtensilsCrossed } from "lucide-react";
 import type { Catalogo } from "@/lib/catalogo";
 import { guardarPedido, mensajeError } from "@/lib/datos";
@@ -25,12 +25,16 @@ interface Props {
    */
   onCerrar?: () => void;
   onGuardado?: () => void;
+  /** Empleado que está tomando el pedido (queda registrado en el pedido) */
+  empleadoId?: string | null;
 }
 
-export function FormularioPedido({ catalogo, pedidoExistente, demo = false, onCerrar, onGuardado }: Props) {
+export function FormularioPedido({ catalogo, pedidoExistente, demo = false, onCerrar, onGuardado, empleadoId = null }: Props) {
   const router = useRouter();
   const comoCapa = Boolean(onCerrar);
-  const { categorias, productos, config } = catalogo;
+  const { negocio, categorias, productos, cargos, config } = catalogo;
+  // Lo que se suma al elegir "Domicilio" (cargos fijos que solo aplican a domicilio)
+  const extraDomicilio = cargos.filter((c) => c.activo && c.tipo === "por_pedido" && c.solo_domicilio).reduce((s, c) => s + c.valor, 0);
   const editando = Boolean(pedidoExistente);
 
   const [nombre, setNombre] = useState(pedidoExistente?.cliente_nombre ?? "");
@@ -52,8 +56,8 @@ export function FormularioPedido({ catalogo, pedidoExistente, demo = false, onCe
   const productosVisibles = useMemo(() => productos.filter((p) => p.categoria_id === categoria?.id && p.activo), [productos, categoria]);
 
   const totales = useMemo(
-    () => calcularTotales(items.map((it) => ({ precio_unitario: precioUnitarioBorrador(it, config), cantidad: it.cantidad, categoria_nombre: it.categoria_nombre })), categorias, config, esDomicilio),
-    [items, categorias, config, esDomicilio],
+    () => calcularTotales(items.map((it) => ({ precio_unitario: precioUnitarioBorrador(it, config), cantidad: it.cantidad, categoria_nombre: it.categoria_nombre })), cargos, categorias, esDomicilio),
+    [items, cargos, categorias, config, esDomicilio],
   );
   const unidades = items.reduce((s, i) => s + i.cantidad, 0);
 
@@ -98,7 +102,16 @@ export function FormularioPedido({ catalogo, pedidoExistente, demo = false, onCe
     setGuardando(true);
     try {
       await guardarPedido(
-        { id: pedidoExistente?.id, cliente_nombre: nombre.trim(), cliente_telefono: telefono.replace(/\D/g, ""), metodo_pago: metodo, es_domicilio: esDomicilio, notas: notas.trim() },
+        {
+          id: pedidoExistente?.id,
+          negocio_id: negocio.id,
+          empleado_id: empleadoId,
+          cliente_nombre: nombre.trim(),
+          cliente_telefono: telefono.replace(/\D/g, ""),
+          metodo_pago: metodo,
+          es_domicilio: esDomicilio,
+          notas: notas.trim(),
+        },
         aItemsEntrada(items, config),
       );
       if (onGuardado) {
@@ -127,7 +140,7 @@ export function FormularioPedido({ catalogo, pedidoExistente, demo = false, onCe
           </Link>
         )}
         <h1 className="text-xl font-black">{editando ? `Editar pedido #${pedidoExistente!.numero_dia}` : "Nuevo pedido"}</h1>
-        {ultimoAgregado && <span className="ml-2 hidden rounded-full bg-ok/20 px-3 py-1 text-sm font-bold text-green-300 sm:inline">+ {ultimoAgregado}</span>}
+        {ultimoAgregado && <span className="ml-2 hidden rounded-full bg-ok/20 px-3 py-1 text-sm font-bold text-ok sm:inline">+ {ultimoAgregado}</span>}
         {/* Conmutador móvil */}
         <div className="ml-auto flex gap-1 rounded-xl bg-panel-2 p-1 lg:hidden">
           <button type="button" onClick={() => setPanelMovil("productos")} className={`btn min-h-10 px-3 ${panelMovil === "productos" ? "bg-marca text-black" : ""}`}>
@@ -169,9 +182,9 @@ export function FormularioPedido({ catalogo, pedidoExistente, demo = false, onCe
               >
                 <span className="text-base font-extrabold leading-tight">{p.nombre.replace(/^(Hamburguesa|Perro Caliente|Salchipapa)\s+/i, "")}</span>
                 <span className="mt-2 flex w-full items-end justify-between">
-                  <span className="text-lg font-black text-marca-claro">{formatoCOP(p.precio)}</span>
+                  <span className="text-lg font-black text-marca-oscuro">{formatoCOP(p.precio)}</span>
                   {p.agotado ? (
-                    <span className="rounded-md bg-peligro/20 px-1.5 text-xs font-bold text-red-300">AGOTADO</span>
+                    <span className="rounded-md bg-peligro/20 px-1.5 text-xs font-bold text-peligro">AGOTADO</span>
                   ) : categoria?.permite_combo ? (
                     <span className="text-xs text-texto-suave">Combo {formatoCOP(p.precio_combo ?? p.precio + config.extra_combo)}</span>
                   ) : null}
@@ -211,7 +224,7 @@ export function FormularioPedido({ catalogo, pedidoExistente, demo = false, onCe
 
             <div className="mt-3 grid grid-cols-2 gap-2">
               <button type="button" onClick={() => setEsDomicilio(true)} className={`btn ${esDomicilio ? "bg-marca text-black" : "bg-panel-2"}`}>
-                <Bike className="size-5" /> Domicilio (+{formatoCOP(config.costo_domicilio)})
+                <Bike className="size-5" /> Domicilio{extraDomicilio > 0 ? ` (+${formatoCOP(extraDomicilio)})` : ""}
               </button>
               <button type="button" onClick={() => setEsDomicilio(false)} className={`btn ${!esDomicilio ? "bg-marca text-black" : "bg-panel-2"}`}>
                 <Store className="size-5" /> Recoge
@@ -256,14 +269,12 @@ export function FormularioPedido({ catalogo, pedidoExistente, demo = false, onCe
             <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm text-texto-suave">
               <dt>Subtotal</dt>
               <dd className="text-right tabular-nums">{formatoCOP(totales.subtotal)}</dd>
-              {totales.unidadesIcopor > 0 && (
-                <>
-                  <dt>Icopor ({totales.unidadesIcopor} × {formatoCOP(config.costo_icopor)})</dt>
-                  <dd className="text-right tabular-nums">{formatoCOP(totales.costoIcopor)}</dd>
-                </>
-              )}
-              <dt>Domicilio</dt>
-              <dd className="text-right tabular-nums">{esDomicilio ? formatoCOP(totales.costoDomicilio) : "—"}</dd>
+              {totales.cargos.map((c) => (
+                <Fragment key={c.nombre}>
+                  <dt>{c.nombre}</dt>
+                  <dd className="text-right tabular-nums">{formatoCOP(c.valor)}</dd>
+                </Fragment>
+              ))}
             </dl>
             <div className="mt-2 flex items-center justify-between">
               <span className="text-lg font-bold">Total</span>

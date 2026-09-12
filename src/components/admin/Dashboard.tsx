@@ -95,7 +95,7 @@ function Kpi({ etiqueta, valor, destacado, alerta }: { etiqueta: string; valor: 
   return (
     <div className={`tarjeta p-4 ${destacado ? "border-marca/60 bg-marca/10" : ""} ${alerta ? "border-peligro/50" : ""}`}>
       <div className="text-xs uppercase tracking-wide text-texto-suave">{etiqueta}</div>
-      <div className={`mt-1 text-2xl font-black tabular-nums ${destacado ? "text-marca-claro" : ""}`}>{valor}</div>
+      <div className={`mt-1 text-2xl font-black tabular-nums ${destacado ? "text-marca-oscuro" : ""}`}>{valor}</div>
     </div>
   );
 }

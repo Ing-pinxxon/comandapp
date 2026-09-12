@@ -1,11 +1,14 @@
-import { FormularioLogin } from "@/components/login/FormularioLogin";
+import { Suspense } from "react";
+import { FormularioAcceso } from "@/components/login/FormularioAcceso";
 
-export const metadata = { title: "Ingresar · Comandas Saboratto" };
+export const metadata = { title: "Iniciar sesión · Comandapp" };
 
 export default function PaginaLogin() {
   return (
     <main className="flex flex-1 items-center justify-center p-6">
-      <FormularioLogin emailPersonal={process.env.NEXT_PUBLIC_EMAIL_PERSONAL ?? "personal@saboratto.app"} />
+      <Suspense>
+        <FormularioAcceso modo="login" />
+      </Suspense>
     </main>
   );
 }

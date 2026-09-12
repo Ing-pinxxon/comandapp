@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { BarChart3, ChevronDown, ChevronUp, LogOut, Plus, RefreshCw } from "lucide-react";
-import type { PedidoConItems, Rol } from "@/lib/tipos";
+import { BarChart3, ChevronDown, ChevronUp, LogOut, Plus, RefreshCw, UserRound } from "lucide-react";
+import { iniciales, type EmpleadoActual, type PedidoConItems } from "@/lib/tipos";
 import { aprobarPedido, cambiarEstado, cargarCatalogo, cargarPedidosHoy, cerrarSesion, mensajeError, suscribirPedidos } from "@/lib/datos";
 import type { Catalogo } from "@/lib/catalogo";
 import { fechaISOBogota, hora12 } from "@/lib/fechas";
@@ -16,7 +16,8 @@ import { Aviso } from "@/components/ui/Aviso";
 interface Props {
   inicial: PedidoConItems[];
   catalogoInicial: Catalogo;
-  rol: Rol;
+  /** Empleado identificado con PIN en esta tablet */
+  empleado: EmpleadoActual | null;
   /** Vista previa sin base de datos: no carga ni guarda, solo cambia el estado en pantalla */
   demo?: boolean;
 }
@@ -24,7 +25,7 @@ interface Props {
 /** Qué formulario está abierto encima de la cola */
 type Composicion = { modo: "nuevo" } | { modo: "editar"; pedido: PedidoConItems } | null;
 
-export function ColaPedidos({ inicial, catalogoInicial, rol, demo = false }: Props) {
+export function ColaPedidos({ inicial, catalogoInicial, empleado, demo = false }: Props) {
   const router = useRouter();
   const [pedidos, setPedidos] = useState<PedidoConItems[]>(inicial);
   const [catalogo, setCatalogo] = useState<Catalogo>(catalogoInicial);
@@ -36,7 +37,8 @@ export function ColaPedidos({ inicial, catalogoInicial, rol, demo = false }: Pro
   const [verCancelados, setVerCancelados] = useState(false);
   const [ocupados, setOcupados] = useState<Set<number>>(new Set());
   const [composicion, setComposicion] = useState<Composicion>(null);
-  const config = catalogo.config;
+  const { negocio, config } = catalogo;
+  const negocioId = negocio.id;
   // Evita pisar un cambio recién hecho con una respuesta más lenta del servidor
   const enVuelo = useRef(0);
 
@@ -46,7 +48,7 @@ export function ColaPedidos({ inicial, catalogoInicial, rol, demo = false }: Pro
     const marca = ++enVuelo.current;
     try {
       setRefrescando(true);
-      const p = await cargarPedidosHoy();
+      const p = await cargarPedidosHoy(negocioId);
       if (marca === enVuelo.current) {
         setPedidos(p);
         setError(null);
@@ -56,25 +58,25 @@ export function ColaPedidos({ inicial, catalogoInicial, rol, demo = false }: Pro
     } finally {
       setRefrescando(false);
     }
-  }, [demo]);
+  }, [demo, negocioId]);
 
   /** El menú y los ajustes cambian poco: se releen solo cuando hace falta. */
   const recargarCatalogo = useCallback(async () => {
     if (demo) return;
     try {
-      setCatalogo(await cargarCatalogo());
+      setCatalogo(await cargarCatalogo(negocioId));
     } catch {
       // si falla se conserva el catálogo que ya está en pantalla
     }
-  }, [demo]);
+  }, [demo, negocioId]);
 
   // Tiempo real + respaldo cada 30 s + reloj cada 15 s
   useEffect(() => {
     const parar = demo
       ? () => undefined
-      : suscribirPedidos((tabla) => {
-          if (tabla === "configuracion" || tabla === "productos") void recargarCatalogo();
-          else void recargarPedidos();
+      : suscribirPedidos(negocioId, (tabla) => {
+          if (tabla === "pedidos" || tabla === "pedido_items") void recargarPedidos();
+          else void recargarCatalogo();
         });
     const respaldo = setInterval(() => void recargarPedidos(), 30000);
     const reloj = setInterval(() => setAhora(new Date()), 15000);
@@ -88,7 +90,7 @@ export function ColaPedidos({ inicial, catalogoInicial, rol, demo = false }: Pro
       clearInterval(reloj);
       document.removeEventListener("visibilitychange", alVolver);
     };
-  }, [recargarPedidos, recargarCatalogo, demo]);
+  }, [recargarPedidos, recargarCatalogo, demo, negocioId]);
 
   const hoy = fechaISOBogota(ahora);
   const pendientes = useMemo(() => pedidos.filter((p) => p.estado === "pendiente").sort((a, b) => a.creado_en.localeCompare(b.creado_en)), [pedidos]);
@@ -134,7 +136,6 @@ export function ColaPedidos({ inicial, catalogoInicial, rol, demo = false }: Pro
 
   async function aprobar(pedido: PedidoConItems) {
     const anterior = pedidos;
-    // La marca azul desaparece de inmediato; si falla, vuelve.
     setPedidos((lista) => lista.map((p) => (p.id === pedido.id ? { ...p, revisado: true, revisado_en: new Date().toISOString() } : p)));
     setError(null);
     if (demo) return;
@@ -157,9 +158,14 @@ export function ColaPedidos({ inicial, catalogoInicial, rol, demo = false }: Pro
       {/* Cabecera fija de una línea */}
       <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-borde bg-fondo/95 px-4 py-2.5 backdrop-blur">
         <div className="flex items-center gap-2">
-          <span className="flex size-10 items-center justify-center rounded-xl bg-marca text-xl">🍔</span>
+          {negocio.logo_url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={negocio.logo_url} alt="" className="size-10 rounded-xl object-cover" />
+          ) : (
+            <span className="flex size-10 items-center justify-center rounded-xl bg-marca text-sm font-black text-black">{iniciales(negocio.nombre)}</span>
+          )}
           <div className="leading-tight">
-            <div className="text-lg font-black">Saboratto</div>
+            <div className="text-lg font-black">{negocio.nombre}</div>
             <div className="text-xs text-texto-suave">{hora12(ahora)}</div>
           </div>
         </div>
@@ -176,26 +182,43 @@ export function ColaPedidos({ inicial, catalogoInicial, rol, demo = false }: Pro
         </div>
 
         <div className="ml-auto flex items-center gap-2">
+          {empleado && (
+            <Link href="/quien" className="btn bg-panel-2 px-3" title="Cambiar de usuario">
+              <UserRound className="size-5" />
+              <span className="hidden md:inline">{empleado.nombre}</span>
+            </Link>
+          )}
           <button type="button" onClick={() => void recargarPedidos()} className="btn bg-panel-2 px-3" aria-label="Actualizar" title="Actualizar">
             <RefreshCw className={`size-5 ${refrescando ? "animate-spin" : ""}`} />
           </button>
-          {rol === "admin" && (
-            <Link href="/admin" className="btn bg-panel-2 px-3" title="Panel administrador">
+          {empleado?.es_dueno && (
+            <Link href="/admin" className="btn bg-panel-2 px-3" title="Panel del dueño">
               <BarChart3 className="size-5" />
-              <span className="hidden lg:inline">Admin</span>
+              <span className="hidden lg:inline">Panel</span>
             </Link>
           )}
           <button type="button" onClick={() => void salir()} className="btn bg-panel-2 px-3" aria-label="Salir" title="Cerrar sesión">
             <LogOut className="size-5" />
           </button>
           {/* Abre el formulario al instante: el menú ya está en memoria, no hay ida al servidor */}
-          <button type="button" onClick={() => setComposicion({ modo: "nuevo" })} className="btn bg-marca px-4 text-lg text-black sm:px-5" aria-label="Nuevo pedido">
+          <button
+            type="button"
+            disabled={!negocio.activo}
+            onClick={() => setComposicion({ modo: "nuevo" })}
+            className="btn bg-marca px-4 text-lg text-black sm:px-5"
+            aria-label="Nuevo pedido"
+          >
             <Plus className="size-6" /> <span className="hidden sm:inline">Nuevo pedido</span>
           </button>
         </div>
       </header>
 
       <main className="flex-1 p-4">
+        {!negocio.activo && (
+          <Aviso tipo="error" className="mb-4">
+            Esta cuenta está desactivada. No se pueden tomar pedidos nuevos. Escríbenos si crees que es un error.
+          </Aviso>
+        )}
         {error && <Aviso tipo="error" className="mb-4">{error}</Aviso>}
 
         {pendientes.length === 0 ? (
@@ -253,6 +276,7 @@ export function ColaPedidos({ inicial, catalogoInicial, rol, demo = false }: Pro
           key={composicion.modo === "editar" ? `editar-${composicion.pedido.id}` : "nuevo"}
           catalogo={catalogo}
           pedidoExistente={composicion.modo === "editar" ? composicion.pedido : undefined}
+          empleadoId={empleado?.id ?? null}
           demo={demo}
           onCerrar={() => setComposicion(null)}
           onGuardado={() => {
@@ -267,7 +291,7 @@ export function ColaPedidos({ inicial, catalogoInicial, rol, demo = false }: Pro
 
 function Indicador({ etiqueta, valor, destacado }: { etiqueta: string; valor: number | string; destacado?: boolean }) {
   return (
-    <div className={`rounded-xl px-3 py-1.5 ${destacado ? "bg-marca/15 text-marca-claro" : "bg-panel-2 text-texto-suave"}`}>
+    <div className={`rounded-xl px-3 py-1.5 ${destacado ? "bg-marca/15 text-marca-oscuro" : "bg-panel-2 text-texto-suave"}`}>
       <span className="text-xs uppercase tracking-wide">{etiqueta}</span>{" "}
       <span className="text-base font-black">{valor}</span>
     </div>

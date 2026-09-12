@@ -1,118 +1,121 @@
-# 🍔 Comandas Saboratto
+# Comandapp
 
-Sistema de comandas para Saboratto: toma de pedidos manual, cola con semáforo de tiempos (verde / amarillo / naranja), botones de **Entregado · Editar · Cancelar · WhatsApp al cliente**, y un panel de administrador con estadísticas de ventas.
+Pantalla de comandas para negocios de comida. Cada negocio crea su cuenta, sube una foto de su carta para que la IA arme el menú, define su equipo con PIN y queda tomando pedidos en la tablet: cola con semáforo de tiempos, avisos por WhatsApp al cliente y un panel con lo que se vende.
 
-- **Stack:** Next.js 16 (App Router, TypeScript, Tailwind v4) + Supabase (Postgres, Auth, Realtime) + Recharts.
-- **Pensado para tablet en horizontal**, también funciona en celular y PC.
-- **Reglas de cobro** (iguales a la web): icopor $500 por cada perro o salchipapa, domicilio $1.000, combo de hamburguesa +$6.000. **Sin descuentos.**
+- **Web:** Next.js 16 (App Router, TypeScript, Tailwind v4).
+- **Datos:** Supabase (Postgres, Auth con correo y Google, Storage, Realtime). Cada negocio ve solo lo suyo (RLS por `negocio_id`).
+- **IA del menú:** Gemini (`@google/genai`) lee las fotos y devuelve productos y precios; el dueño revisa antes de guardar.
+- **Look:** crema, negro y acento mostaza. Tema claro en toda la app, pensado para tablet en horizontal.
 
 ---
 
-## 1. Requisitos
+## 1. Cómo funciona para un negocio
 
-- Node.js 20.9 o superior (este equipo tiene Node 24 instalado en `%LOCALAPPDATA%\Programs\nodejs`; si una terminal nueva no lo encuentra, ciérrala y ábrela de nuevo).
-- Una cuenta gratuita en [supabase.com](https://supabase.com).
+1. **Crea su cuenta** en `/registro` (correo y contraseña o Google) y confirma el correo.
+2. **Configura el negocio** en `/onboarding`: nombre, WhatsApp, logo y su **PIN de dueño**.
+3. **Sube fotos de la carta**: la IA propone categorías, productos, precios e ingredientes; se revisan y se guardan.
+4. **Crea empleados** con nombre y PIN.
+5. En la tablet, `/quien`: cada empleado toca su nombre y escribe su PIN. La cola queda en `/comandas`.
+6. El dueño entra al **panel** (`/admin`) con su PIN: resumen, pedidos, clientes, menú, cargos, equipo, mi negocio y configuración.
 
-## 2. Crear el proyecto en Supabase (una sola vez)
+Los **cargos** (domicilio, empaque, propina…) se definen por negocio en `/admin/cargos`: por pedido o por cada unidad de ciertas categorías, y opcionalmente solo para domicilios. No hay descuentos.
 
-1. En Supabase: **New project** → nombre `saboratto-comandas`, región más cercana (South America / São Paulo), guarda la contraseña de la base de datos.
-2. Ve a **SQL Editor → New query** y ejecuta, **en orden y uno por uno**, el contenido de:
+Daniel, como dueño de la plataforma, ve todos los negocios en `/plataforma` y puede desactivar cuentas.
+
+---
+
+## 2. Instalar desde cero (una sola vez)
+
+### 2.1 Supabase
+
+1. Crea un proyecto en [supabase.com](https://supabase.com) (región South America / São Paulo).
+2. **SQL Editor → New query**: ejecuta, en orden y uno por uno:
    1. `supabase/01_schema.sql`
    2. `supabase/02_policies.sql`
-   3. `supabase/03_seed.sql`
+   3. `supabase/03_seed.sql` **solo si es la base de Saboratto** (carga su menú). En una instalación limpia para varios negocios, sáltalo.
    4. `supabase/04_realtime.sql`
-   5. `supabase/05_integracion_bot.sql` (para que entren los pedidos del bot de WhatsApp)
-3. **Authentication → Providers → Email:** deja activo *Email* y **desactiva "Confirm email"**.
-   En **Authentication → Sign In / Providers** (o *Settings*), **desactiva "Allow new users to sign up"** para que nadie pueda registrarse por su cuenta.
-4. **Authentication → Users → Add user → Create new user**, crea dos usuarios (marca *Auto Confirm User*):
-   - **Administrador:** tu correo y una contraseña fuerte.
-   - **Personal:** correo `personal@saboratto.app` y contraseña = **el PIN de 6 dígitos** que usará el personal (Supabase exige mínimo 6 caracteres).
-5. Vuelve al **SQL Editor** y convierte tu usuario en admin (cambia el correo por el tuyo):
-   ```sql
-   update perfiles set rol = 'admin'
-   where user_id = (select id from auth.users where email = 'tu-correo@ejemplo.com');
-   ```
-6. En **Project Settings → API** copia **Project URL** y **anon public key**.
+   5. `supabase/05_integracion_bot.sql`
+   6. `supabase/06_multinegocio.sql` ← convierte la base en multinegocio. Si había datos de Saboratto, los migra al negocio "Saboratto" y hace dueño y superadmin al usuario que tenía `perfiles.rol = 'admin'`.
+3. **Authentication → Providers → Email:** activo, con **"Confirm email" activado**.
+4. **Authentication → URL Configuration:** *Site URL* = la URL de la app (en local `http://localhost:3000`), y en *Redirect URLs* agrega `http://localhost:3000/auth/callback` y la de producción (`https://tu-dominio/auth/callback`).
+5. **Google (opcional pero recomendado):**
+   1. En [console.cloud.google.com](https://console.cloud.google.com) → APIs y servicios → Credenciales → **Crear credenciales → ID de cliente OAuth** (tipo *Aplicación web*).
+   2. En *URI de redirección autorizados* pega la URL que muestra Supabase en **Authentication → Providers → Google** (termina en `/auth/v1/callback`).
+   3. Copia *Client ID* y *Client secret* en Supabase → Providers → Google y actívalo.
+6. Los buckets de Storage `logos` (público) y `menus` (privado) los crea el script 06. Si tu proyecto no lo permite, créalos a mano en **Storage** con esos nombres y esa visibilidad.
 
-> Para cambiar el PIN del personal: *Authentication → Users → personal@saboratto.app → Reset password* (o editar el usuario) y pon el nuevo PIN.
+### 2.2 Variables de entorno
 
-## 3. Configurar y correr en el PC
+Copia `.env.local.example` a `.env.local` y completa:
 
-Edita el archivo `.env.local` (ya existe con valores de ejemplo marcados como `REEMPLAZAR`; si no está, copia `.env.local.example` como `.env.local`) y pega la URL y la anon key de Supabase.
+| Variable | Dónde se consigue |
+|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase → Project Settings → API |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase → Project Settings → API (anon public) |
+| `GEMINI_API_KEY` | [aistudio.google.com/apikey](https://aistudio.google.com/apikey). Solo servidor: no lleva `NEXT_PUBLIC_`. |
 
-### Forma fácil de arrancar (recomendada)
+### 2.3 Correr en el PC
 
-**Doble clic en `iniciar.bat`.** Ese archivo instala lo que falte, prende el servidor y no depende de la configuración del sistema. Luego abre <http://localhost:3000>. Para apagarlo, cierra la ventana negra.
+Este equipo tiene Node 24 en `%LOCALAPPDATA%\Programs\nodejs`. Doble clic en `iniciar.bat` o:
 
-### Si prefieres la terminal
-
-`npm` solo funciona en terminales abiertas **después** de instalar Node. Si te dice *"npm is not recognized"*, **cierra la terminal y abre una nueva**, o pega esta línea una vez por sesión:
-
-```powershell
-$env:Path = "$env:LOCALAPPDATA\Programs\nodejs;$env:Path"
+```bash
+npm install
+npm run dev
 ```
 
-Después ya puedes usar `npm install`, `npm run dev`, `npm test`, `npm run lint` y `npm run build` con normalidad.
+Abre <http://localhost:3000>. Otros comandos: `npm test`, `npm run lint`, `npm run build`.
 
-### ¿Algo no carga?
+En desarrollo hay tres páginas de apoyo que no existen en producción: `/vista-previa` (cola con datos de ejemplo), `/vista-previa/pedido` (formulario) y `/vista-previa/conexion` (diagnóstico: sesión, negocio, menú, cargos, empleados, llave de Gemini).
 
-Con el servidor prendido, abre <http://localhost:3000/vista-previa/conexion>. Esa página te dice si la conexión a Supabase funciona y si el menú está cargado. También puedes ver la interfaz con datos de ejemplo en `/vista-previa` y `/vista-previa/pedido`. Las tres solo existen en modo desarrollo.
+---
 
-### Desde la tablet
+## 3. Publicar en Vercel
 
-Con el servidor prendido en el PC, entra desde la tablet a `http://IP-DEL-PC:3000` (por ejemplo `http://192.168.1.10:3000`) estando en la misma red Wi-Fi. Si la IP del PC cambia, agrégala en `allowedDevOrigins` dentro de `next.config.ts`. Para usarla desde cualquier lugar, publícala en Vercel (paso 5).
+1. El repositorio ya está en GitHub (`Ing-pinxxon/comandapp`). En [vercel.com](https://vercel.com) → **Add New Project** → importa el repo.
+2. **Environment Variables:** `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `GEMINI_API_KEY`.
+3. Deploy. Luego en Supabase → Authentication → URL Configuration pon la URL de Vercel como *Site URL* y agrega `https://…vercel.app/auth/callback` a *Redirect URLs*.
+4. En la tablet, abre la URL y agrégala a la pantalla de inicio.
 
-## 4. Cómo se usa
+---
 
-| Pantalla | Quién | Qué hace |
-|---|---|---|
-| `/login` | Todos | Teclado de PIN (personal) o correo + contraseña (admin). La sesión queda guardada en el dispositivo. |
-| `/comandas` | Personal y admin | Cola de pedidos. Cada tarjeta muestra #, minutos transcurridos, cliente, productos, total. Color **verde** (0–15 min), **amarillo** (15–25), **naranja** (+25). Botones: ✅ Entregado, ✏️ Editar, ❌ Cancelar (pide motivo), 💬 WhatsApp al cliente. Se sincroniza en tiempo real entre dispositivos. |
-| `/comandas/nuevo` | Personal y admin | Tomar pedido: menú por categorías a la izquierda, cliente + items + **total en vivo** a la derecha. Toca un item para quitar ingredientes, ponerlo en combo o agregar nota. **Producto X** para algo fuera del menú. |
-| `/admin` | Solo admin | Resumen con KPIs y gráficas (ventas por día, día de la semana, horas pico, unidades por categoría, top productos, combos, métodos de pago, ingredientes más quitados, tiempos de entrega, cancelaciones). |
-| `/admin/pedidos` | Solo admin | Historial con búsqueda, detalle y **exportar CSV** (abre en Excel). |
-| `/admin/clientes` | Solo admin | Clientes frecuentes por teléfono, total gastado y producto favorito. |
-| `/admin/productos` | Solo admin | Editar precios, ingredientes, marcar **agotado**, ocultar, agregar productos (incluye los "productos X" que se repiten). |
-| `/admin/configuracion` | Solo admin | Minutos del semáforo, costos (domicilio, icopor, combo) y textos de WhatsApp. |
+## 4. Conectar un bot de WhatsApp (Saboratto)
 
-## 5. Publicar en Vercel (para usar desde cualquier lugar)
+Cuando un cliente confirma un pedido con el bot, entra solo a la cola marcado como **"Llegó por WhatsApp · Revisar"**. El personal lo aprueba con un toque.
 
-1. Sube la carpeta a un repositorio de GitHub (`git init`, `git add .`, `git commit`, `git push`). El archivo `.env.local` **no** se sube (está en `.gitignore`).
-2. En [vercel.com](https://vercel.com) → **Add New Project** → importa el repo.
-3. En **Environment Variables** agrega `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
-4. Deploy. Abre la URL en la tablet y agrégala a la pantalla de inicio (se comporta como app).
+En Railway (proyecto del bot) → Variables:
 
-## 6. Conectar el bot de WhatsApp
+| Variable | Valor |
+|---|---|
+| `COMANDAS_SUPABASE_URL` | URL del proyecto de Supabase |
+| `COMANDAS_SERVICE_KEY` | clave `service_role` (Project Settings → API). **Nunca** en el código ni en un repositorio. |
+| `COMANDAS_CLAVE_NEGOCIO` | la clave que aparece en Comandapp → Panel del dueño → **Mi negocio** |
 
-Cuando un cliente le confirma un pedido al bot, ese pedido aparece solo en la pantalla de comandas, marcado en azul como **"Llegó por WhatsApp · Revisar"**. El personal compara los productos, toca **Está correcto, aprobar** y la marca desaparece. Si algo quedó mal, se corrige con el botón de editar, que también lo da por revisado.
+Si faltan variables el bot sigue funcionando igual y solo deja un aviso en sus registros.
 
-Para activarlo:
+---
 
-1. En Supabase, ejecuta `supabase/05_integracion_bot.sql` si aún no lo hiciste.
-2. En Supabase ve a **Project Settings → API** y copia la clave **`service_role`** (la secreta, *no* la `anon`).
-3. En Railway, en el proyecto del bot, ve a **Variables** y agrega:
+## 5. Seguridad de la tablet
 
-   | Variable | Valor |
-   |---|---|
-   | `COMANDAS_SUPABASE_URL` | la misma URL del proyecto (`https://....supabase.co`) |
-   | `COMANDAS_SERVICE_KEY` | la clave `service_role` |
+La tablet queda con la sesión del dueño abierta y los empleados se identifican por PIN. El PIN protege la pantalla, no la base de datos: alguien con la tablet en la mano y conocimientos técnicos podría leer los datos del negocio. **No dejes la tablet con la sesión abierta fuera del local** y cierra sesión si la prestas. Es el mismo funcionamiento de los sistemas de punto de venta.
 
-4. Railway reinicia el bot solo. Listo.
+---
 
-> ⚠️ La clave `service_role` da control total sobre la base de datos. Va únicamente en las variables de Railway; nunca en el código, ni en la app de comandas, ni en un repositorio.
-
-Si esas dos variables no están configuradas, el bot sigue funcionando exactamente igual que antes y solo deja un aviso en sus registros. Nada se rompe.
-
-**Cómo lo arma el bot:** cuando el cliente acepta, el bot le pide a Gemini que traduzca su propio resumen a una lista de productos, usando únicamente nombres del menú real. Los precios **siempre** se toman de la base de datos, nunca de lo que calculó la IA. Si el bot menciona algo que no está en el menú, entra como producto suelto con el precio que indicó. El texto original queda guardado y se puede ver desde la tarjeta con **Ver lo que escribió el bot**.
-
-## 7. Estructura
+## 6. Estructura
 
 ```
-supabase/            Scripts SQL (esquema, políticas RLS, datos iniciales, realtime)
-src/proxy.ts         Protege rutas (sin sesión → /login)
-src/app/             Páginas: login, comandas, comandas/nuevo, comandas/[id]/editar, admin/*
-src/components/      comandas (cola, tarjeta, cancelar), pedido (formulario, editor, producto X), admin, ui
-src/lib/             precios.ts (totales), semaforo.ts, whatsapp.ts, fechas.ts, analitica.ts, datos.ts (Supabase)
+supabase/                 Scripts SQL (01 esquema … 06 multinegocio)
+src/proxy.ts              Rutas públicas y protección por sesión
+src/app/
+  page.tsx                Landing pública
+  registro, login, recuperar, auth/callback, auth/cambiar-clave
+  onboarding              Asistente: negocio → menú por foto → equipo
+  quien                   Elegir empleado + PIN
+  comandas                Cola, nuevo pedido, editar
+  admin/                  Resumen, pedidos, clientes, productos (+menu/importar), cargos, equipo, negocio, configuración
+  plataforma              Solo superadmin: todos los negocios
+  api/menu/analizar       Lee las fotos del menú con Gemini
+src/components/           comandas, pedido, admin, menu (ImportadorMenu), login, onboarding, plataforma, ui
+src/lib/                  tipos, precios (cargos), menu-ia, datos (Supabase), catalogo(-servidor), analitica, fechas, whatsapp
 ```
 
-Los totales se calculan en el navegador para mostrarlos en vivo **y** se recalculan en la base de datos al guardar (`guardar_pedido`), así el registro siempre es consistente.
+Los totales se calculan en el navegador para mostrarlos en vivo **y** se recalculan en la base al guardar (`guardar_pedido`), así el registro siempre es consistente.

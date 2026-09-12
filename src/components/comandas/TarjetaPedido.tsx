@@ -65,7 +65,10 @@ export function TarjetaPedido({ pedido, ahora, config, ocupado, onEntregar, onCa
               </span>
             )}
           </div>
-          <div className="mt-1 text-xs text-texto-suave">Tomado {hora12(pedido.creado_en)}</div>
+          <div className="mt-1 text-xs text-texto-suave">
+            Tomado {hora12(pedido.creado_en)}
+            {pedido.empleados?.nombre ? ` · ${pedido.empleados.nombre}` : ""}
+          </div>
         </div>
         <div className="text-right">
           {minutos !== null && (
@@ -79,7 +82,7 @@ export function TarjetaPedido({ pedido, ahora, config, ocupado, onEntregar, onCa
       </div>
 
       {/* Cliente */}
-      <div className="mt-3 border-t border-white/10 pt-3">
+      <div className="mt-3 border-t border-borde pt-3">
         <div className="truncate text-xl font-extrabold">{pedido.cliente_nombre}</div>
         <div className="flex items-center gap-2 text-sm text-texto-suave">
           {pedido.cliente_telefono ? <span>{telefonoBonito(pedido.cliente_telefono)}</span> : <span className="italic">Sin teléfono</span>}
@@ -95,38 +98,41 @@ export function TarjetaPedido({ pedido, ahora, config, ocupado, onEntregar, onCa
       {/* Productos */}
       <ul className="mt-3 flex-1 space-y-2">
         {pedido.pedido_items.map((it, i) => (
-          <li key={it.id ?? i} className="rounded-xl bg-black/25 px-3 py-2">
+          <li key={it.id ?? i} className="rounded-xl bg-panel-2 px-3 py-2">
             <div className="flex items-start justify-between gap-2">
               <span className="text-lg font-bold leading-tight">
-                <span className="mr-1.5 inline-block min-w-7 rounded-md bg-white/15 px-1.5 text-center">{it.cantidad}</span>
+                <span className="mr-1.5 inline-block min-w-7 rounded-md bg-negro/10 px-1.5 text-center">{it.cantidad}</span>
                 {it.nombre}
-                {it.es_combo && <span className="ml-1.5 rounded-md bg-marca/25 px-1.5 text-xs font-extrabold text-marca-claro">COMBO</span>}
-                {it.es_personalizado && <span className="ml-1.5 rounded-md bg-white/15 px-1.5 text-xs font-extrabold">X</span>}
+                {it.es_combo && <span className="ml-1.5 rounded-md bg-marca/25 px-1.5 text-xs font-extrabold text-marca-oscuro">COMBO</span>}
+                {it.es_personalizado && <span className="ml-1.5 rounded-md bg-negro/10 px-1.5 text-xs font-extrabold">X</span>}
               </span>
               <span className="whitespace-nowrap text-sm text-texto-suave">{formatoCOP(it.precio_unitario * it.cantidad)}</span>
             </div>
             {it.exclusiones.length > 0 && (
               <div className="mt-1 flex flex-wrap gap-1">
                 {it.exclusiones.map((ex) => (
-                  <span key={ex} className="rounded-md bg-peligro/25 px-1.5 py-0.5 text-sm font-bold text-red-200">
+                  <span key={ex} className="rounded-md bg-peligro/25 px-1.5 py-0.5 text-sm font-bold text-peligro">
                     {emojiIngrediente(ex)} Sin {ex}
                   </span>
                 ))}
               </div>
             )}
-            {it.nota && <div className="mt-0.5 text-sm text-amber-200">📝 {it.nota}</div>}
+            {it.nota && <div className="mt-0.5 text-sm text-marca-oscuro">📝 {it.nota}</div>}
           </li>
         ))}
       </ul>
-      {pedido.notas && <div className="mt-2 rounded-xl border border-amber-400/40 bg-amber-400/10 px-3 py-2 text-sm text-amber-100">📝 {pedido.notas}</div>}
-      {pedido.motivo_cancelacion && <div className="mt-2 text-sm text-red-300">Motivo: {pedido.motivo_cancelacion}</div>}
+      {pedido.notas && <div className="mt-2 rounded-xl border border-marca/50 bg-marca/10 px-3 py-2 text-sm text-marca-oscuro">📝 {pedido.notas}</div>}
+      {pedido.motivo_cancelacion && <div className="mt-2 text-sm text-peligro">Motivo: {pedido.motivo_cancelacion}</div>}
 
       {/* Total */}
-      <div className="mt-3 flex items-end justify-between border-t border-white/10 pt-3">
+      <div className="mt-3 flex items-end justify-between border-t border-borde pt-3">
         <div className="text-xs text-texto-suave">
           <div>{etiquetaMetodoPago(pedido.metodo_pago)}</div>
-          {pedido.costo_icopor > 0 && <div>Icopor {formatoCOP(pedido.costo_icopor)} ({pedido.unidades_icopor})</div>}
-          {pedido.costo_domicilio > 0 && <div>Domicilio {formatoCOP(pedido.costo_domicilio)}</div>}
+          {(pedido.cargos ?? []).map((c) => (
+            <div key={c.nombre}>
+              {c.nombre} {formatoCOP(c.valor)}
+            </div>
+          ))}
         </div>
         <div className="text-2xl font-black">{formatoCOP(pedido.total)}</div>
       </div>
@@ -138,7 +144,7 @@ export function TarjetaPedido({ pedido, ahora, config, ocupado, onEntregar, onCa
             {verOriginal ? "Ocultar" : "Ver"} lo que escribió el bot
           </button>
           {verOriginal && (
-            <pre className="mt-1 max-h-40 overflow-y-auto whitespace-pre-wrap rounded-lg bg-black/40 p-2 text-xs text-texto-suave">
+            <pre className="mt-1 max-h-40 overflow-y-auto whitespace-pre-wrap rounded-lg bg-panel-2 p-2 text-xs text-texto-suave">
               {pedido.texto_original}
             </pre>
           )}

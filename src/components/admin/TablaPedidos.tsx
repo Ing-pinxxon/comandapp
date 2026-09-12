@@ -104,7 +104,7 @@ export function TablaPedidos() {
                   <td><Estado estado={p.estado} /></td>
                   <td className="px-2 text-texto-suave">{expandido ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}</td>
                   {expandido && (
-                    <tr className="bg-black/20">
+                    <tr className="bg-panel-2">
                       <td colSpan={10} className="px-4 py-3">
                         <ul className="grid gap-1 sm:grid-cols-2">
                           {p.pedido_items.map((i, k) => (
@@ -112,17 +112,20 @@ export function TablaPedidos() {
                               <b>{i.cantidad}×</b> {i.nombre}
                               {i.es_combo && " (Combo)"}
                               {i.es_personalizado && " [X]"} · {formatoCOP(i.precio_unitario * i.cantidad)}
-                              {i.exclusiones.length > 0 && <span className="text-red-300"> · Sin: {i.exclusiones.join(", ")}</span>}
-                              {i.nota && <span className="text-amber-200"> · {i.nota}</span>}
+                              {i.exclusiones.length > 0 && <span className="text-peligro"> · Sin: {i.exclusiones.join(", ")}</span>}
+                              {i.nota && <span className="text-marca-oscuro"> · {i.nota}</span>}
                             </li>
                           ))}
                         </ul>
                         <div className="mt-2 flex flex-wrap gap-4 text-texto-suave">
                           <span>Subtotal {formatoCOP(p.subtotal)}</span>
-                          {p.costo_icopor > 0 && <span>Icopor {formatoCOP(p.costo_icopor)} ({p.unidades_icopor})</span>}
-                          <span>{p.es_domicilio ? `Domicilio ${formatoCOP(p.costo_domicilio)}` : "Recoge"}</span>
+                          {(p.cargos ?? []).map((c) => (
+                            <span key={c.nombre}>{c.nombre} {formatoCOP(c.valor)}</span>
+                          ))}
+                          <span>{p.es_domicilio ? "Domicilio" : "Recoge"}</span>
+                          {p.empleados?.nombre && <span>Tomó: {p.empleados.nombre}</span>}
                           {p.notas && <span>📝 {p.notas}</span>}
-                          {p.motivo_cancelacion && <span className="text-red-300">Motivo: {p.motivo_cancelacion}</span>}
+                          {p.motivo_cancelacion && <span className="text-peligro">Motivo: {p.motivo_cancelacion}</span>}
                           {p.editado_en && <span>Editado {hora12(p.editado_en)}</span>}
                         </div>
                       </td>
@@ -158,9 +161,9 @@ function FilaPedido({ children, expandido, onToggle }: { children: React.ReactNo
 
 function Estado({ estado }: { estado: EstadoPedido }) {
   const estilos: Record<EstadoPedido, string> = {
-    pendiente: "bg-semaforo-amarillo/20 text-yellow-200",
-    entregado: "bg-ok/20 text-green-300",
-    cancelado: "bg-peligro/20 text-red-300",
+    pendiente: "bg-semaforo-amarillo/20 text-marca-oscuro",
+    entregado: "bg-ok/20 text-ok",
+    cancelado: "bg-peligro/20 text-peligro",
   };
   return <span className={`rounded-full px-2 py-0.5 text-xs font-bold uppercase ${estilos[estado]}`}>{estado}</span>;
 }

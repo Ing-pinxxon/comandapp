@@ -37,8 +37,8 @@ export function ItemPedido({ item, config, abierto, onAlternar, onCambiar, onCan
         <div className="min-w-0 flex-1">
           <div className="text-base font-extrabold leading-tight">
             {item.nombre}
-            {item.es_combo && <span className="ml-1.5 rounded-md bg-marca/25 px-1.5 text-xs font-extrabold text-marca-claro">COMBO</span>}
-            {item.es_personalizado && <span className="ml-1.5 rounded-md bg-white/15 px-1.5 text-xs font-extrabold">X</span>}
+            {item.es_combo && <span className="ml-1.5 rounded-md bg-marca/25 px-1.5 text-xs font-extrabold text-marca-oscuro">COMBO</span>}
+            {item.es_personalizado && <span className="ml-1.5 rounded-md bg-negro/10 px-1.5 text-xs font-extrabold">X</span>}
           </div>
           <div className="mt-0.5 text-sm text-texto-suave">
             {formatoCOP(pu)} × {item.cantidad} = <b className="text-texto">{formatoCOP(pu * item.cantidad)}</b>
@@ -46,7 +46,7 @@ export function ItemPedido({ item, config, abierto, onAlternar, onCambiar, onCan
         </div>
         <div className="flex shrink-0 items-center gap-1">
           <button type="button" onClick={() => onCantidad(-1)} className="btn min-h-11 bg-panel-2 px-3" aria-label={item.cantidad === 1 ? "Quitar del pedido" : "Quitar uno"}>
-            {item.cantidad === 1 ? <Trash2 className="size-5 text-red-300" /> : <Minus className="size-5" />}
+            {item.cantidad === 1 ? <Trash2 className="size-5 text-peligro" /> : <Minus className="size-5" />}
           </button>
           <span className="min-w-8 text-center text-xl font-black tabular-nums">{item.cantidad}</span>
           <button type="button" onClick={() => onCantidad(1)} className="btn min-h-11 bg-panel-2 px-3" aria-label="Agregar uno">
@@ -59,17 +59,17 @@ export function ItemPedido({ item, config, abierto, onAlternar, onCambiar, onCan
       {!abierto && quitados > 0 && (
         <div className="flex flex-wrap gap-1.5 px-3 pb-2">
           {item.exclusiones.map((ing) => (
-            <span key={ing} className="rounded-lg bg-peligro/20 px-2 py-1 text-sm font-bold text-red-200">
+            <span key={ing} className="rounded-lg bg-peligro/20 px-2 py-1 text-sm font-bold text-peligro">
               {emojiIngrediente(ing)} Sin {ing}
             </span>
           ))}
         </div>
       )}
-      {!abierto && item.nota && <div className="px-3 pb-2 text-sm text-amber-200">📝 {item.nota}</div>}
+      {!abierto && item.nota && <div className="px-3 pb-2 text-sm text-marca-oscuro">📝 {item.nota}</div>}
 
       {/* Panel de personalización */}
       {abierto && (
-        <div className="space-y-3 border-t border-borde bg-black/20 p-3">
+        <div className="space-y-3 border-t border-borde bg-panel-2 p-3">
           {item.permite_combo && (
             <div className="grid grid-cols-2 gap-2">
               <button type="button" onClick={() => onCambiar({ ...item, es_combo: false })} className={`btn ${!item.es_combo ? "bg-marca text-black" : "bg-panel-2"}`}>
@@ -95,7 +95,7 @@ export function ItemPedido({ item, config, abierto, onAlternar, onCambiar, onCan
                       aria-pressed={quitado}
                       className={`btn min-h-11 gap-1.5 px-3 text-base ${
                         quitado
-                          ? "bg-peligro/25 text-red-200 line-through decoration-2 ring-2 ring-peligro"
+                          ? "bg-peligro/25 text-peligro line-through decoration-2 ring-2 ring-peligro"
                           : "bg-panel-2 text-texto ring-1 ring-borde"
                       }`}
                     >
@@ -134,7 +134,7 @@ export function ItemPedido({ item, config, abierto, onAlternar, onCambiar, onCan
           ) : (
             <>
               <ChevronDown className="size-4" /> Personalizar
-              {quitados > 0 && <span className="rounded-full bg-peligro/25 px-1.5 text-red-200">{quitados}</span>}
+              {quitados > 0 && <span className="rounded-full bg-peligro/25 px-1.5 text-peligro">{quitados}</span>}
             </>
           )}
         </button>

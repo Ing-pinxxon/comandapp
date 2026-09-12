@@ -32,7 +32,6 @@ function FormularioX({ categorias, categoriaInicial, onAgregar }: Omit<Props, "a
 
   const precioNum = Number(precio.replace(/\D/g, ""));
   const valido = nombre.trim().length > 0 && precioNum > 0 && Boolean(categoria);
-  const cat = categorias.find((c) => c.nombre === categoria);
 
   return (
     <form
@@ -66,11 +65,11 @@ function FormularioX({ categorias, categoriaInicial, onAgregar }: Omit<Props, "a
         <input className="campo text-lg tabular-nums" inputMode="numeric" value={precio} onChange={(e) => setPrecio(e.target.value.replace(/\D/g, ""))} placeholder="3500" />
       </label>
       <label className="block">
-        <span className="mb-1 block text-sm text-texto-suave">Categoría (define si cobra icopor)</span>
+        <span className="mb-1 block text-sm text-texto-suave">Categoría (define qué cargos aplican)</span>
         <select className="campo" value={categoria} onChange={(e) => setCategoria(e.target.value)}>
           {categorias.map((c) => (
             <option key={c.id} value={c.nombre}>
-              {c.emoji} {c.nombre}{c.lleva_icopor ? " (icopor)" : ""}
+              {c.emoji} {c.nombre}
             </option>
           ))}
         </select>
@@ -79,7 +78,6 @@ function FormularioX({ categorias, categoriaInicial, onAgregar }: Omit<Props, "a
         <span className="mb-1 block text-sm text-texto-suave">Cantidad</span>
         <input className="campo text-lg tabular-nums" inputMode="numeric" value={cantidad} onChange={(e) => setCantidad(Math.max(1, Number(e.target.value.replace(/\D/g, "")) || 1))} />
       </label>
-      {cat?.lleva_icopor && <p className="text-sm text-texto-suave">Se cobrará icopor por unidad por estar en {cat.nombre}.</p>}
       <button type="submit" disabled={!valido} className="btn w-full bg-marca text-lg text-black">
         <Sparkles className="size-5" /> Agregar al pedido
       </button>

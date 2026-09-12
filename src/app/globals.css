@@ -1,29 +1,31 @@
 @import "tailwindcss";
 
-/* Tokens de marca Saboratto (de WebSaboratto/src/style.css) + semáforo de la cola */
+/* Comandapp · look "minimalista premium": crema, negro y acento mostaza.
+   Tema claro único (también en la cola de cocina). El naranja queda solo para el semáforo. */
 @theme {
-  --color-marca: #f97316;
-  --color-marca-claro: #fb923c;
-  --color-marca-oscuro: #ea580c;
+  --color-marca: #d9a833;
+  --color-marca-claro: #f2cc5c;
+  --color-marca-oscuro: #9a7318;
+  --color-negro: #111111;
 
-  --color-fondo: #0b0b0d;
-  --color-panel: #18181b;
-  --color-panel-2: #232327;
-  --color-borde: #2e2e33;
-  --color-texto: #f4f4f5;
-  --color-texto-suave: #a1a1aa;
-  --color-texto-dim: #71717a;
+  --color-fondo: #f6f3ec;
+  --color-panel: #ffffff;
+  --color-panel-2: #f1ede3;
+  --color-borde: #e6e0d2;
+  --color-texto: #141414;
+  --color-texto-suave: #6b6760;
+  --color-texto-dim: #9a958b;
 
   --color-semaforo-verde: #22c55e;
   --color-semaforo-amarillo: #facc15;
   --color-semaforo-naranja: #f97316;
 
-  --color-ok: #16a34a;
-  --color-editar: #3b82f6;
-  --color-peligro: #ef4444;
+  --color-ok: #15803d;
+  --color-editar: #111111;
+  --color-peligro: #dc2626;
   --color-whatsapp: #25d366;
 
-  --font-sans: "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-sans: "Inter", "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
 
   --animate-pulso-suave: pulso-suave 1.6s ease-in-out infinite;
   @keyframes pulso-suave {
@@ -33,7 +35,7 @@
 }
 
 html {
-  color-scheme: dark;
+  color-scheme: light;
   -webkit-text-size-adjust: 100%;
   -webkit-tap-highlight-color: transparent;
 }
@@ -58,34 +60,35 @@ button, input, select, textarea {
   gap: 0.5rem;
   min-height: 3rem;
   padding: 0.625rem 1rem;
-  border-radius: 0.875rem;
+  border-radius: 1rem;
   font-weight: 700;
   line-height: 1.1;
   user-select: none;
-  transition: transform 80ms ease, filter 120ms ease, background-color 120ms ease;
-  &:active { transform: scale(0.97); filter: brightness(1.1); }
+  transition: transform 80ms ease, filter 120ms ease, background-color 120ms ease, box-shadow 120ms ease;
+  &:active { transform: scale(0.97); filter: brightness(0.96); }
   &:disabled { opacity: 0.45; pointer-events: none; }
 }
 
 @utility tarjeta {
   background: var(--color-panel);
   border: 1px solid var(--color-borde);
-  border-radius: 1.25rem;
+  border-radius: 1.5rem;
+  box-shadow: 0 1px 2px rgba(20, 20, 20, 0.04), 0 8px 24px -12px rgba(20, 20, 20, 0.12);
 }
 
 @utility campo {
   width: 100%;
   min-height: 3rem;
   padding: 0.625rem 0.875rem;
-  border-radius: 0.875rem;
-  background: var(--color-panel-2);
+  border-radius: 1rem;
+  background: var(--color-panel);
   border: 1px solid var(--color-borde);
   color: var(--color-texto);
   outline: none;
-  &:focus { border-color: var(--color-marca); box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.25); }
+  &:focus { border-color: var(--color-marca); box-shadow: 0 0 0 3px rgba(217, 168, 51, 0.25); }
   &::placeholder { color: var(--color-texto-dim); }
 }
 
 /* Scroll interno discreto */
 .scroll-fino::-webkit-scrollbar { width: 8px; height: 8px; }
-.scroll-fino::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 8px; }
+.scroll-fino::-webkit-scrollbar-thumb { background: #d6d0c2; border-radius: 8px; }

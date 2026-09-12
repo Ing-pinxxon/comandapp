@@ -1,9 +1,10 @@
-// Cálculo de precios. Misma lógica que WebSaboratto/src/cart.js pero SIN descuentos:
-//   - icopor: $500 por cada unidad de una categoría con lleva_icopor (perros y salchipapas)
-//   - domicilio: $1.000 si el pedido es a domicilio
-//   - combo (solo hamburguesas): precio_combo del producto o precio + extra_combo
+// Cálculo de precios con cargos configurables por negocio. Sin descuentos.
+//   - por_unidad_categoria: valor × unidades de las categorías indicadas (ej. icopor por perro)
+//   - por_pedido: valor fijo; si solo_domicilio, únicamente cuando el pedido es a domicilio
+//   - combo: precio_combo del producto o precio + extra_combo del negocio
+// La misma regla vive en SQL (guardar_pedido): la base recalcula al guardar.
 
-import type { Categoria, Configuracion, Producto } from "./tipos";
+import type { Cargo, CargoAplicado, Categoria, Configuracion, Producto } from "./tipos";
 
 export interface ItemParaTotal {
   precio_unitario: number;
@@ -13,9 +14,8 @@ export interface ItemParaTotal {
 
 export interface Totales {
   subtotal: number;
-  unidadesIcopor: number;
-  costoIcopor: number;
-  costoDomicilio: number;
+  cargos: CargoAplicado[];
+  totalCargos: number;
   total: number;
 }
 
@@ -26,18 +26,26 @@ export function precioUnitario(producto: Pick<Producto, "precio" | "precio_combo
 
 export function calcularTotales(
   items: ItemParaTotal[],
-  categorias: Pick<Categoria, "nombre" | "lleva_icopor">[],
-  cfg: Configuracion,
+  cargos: Pick<Cargo, "nombre" | "tipo" | "valor" | "categorias" | "solo_domicilio" | "activo" | "orden">[],
+  categorias: Pick<Categoria, "id" | "nombre">[],
   esDomicilio: boolean,
 ): Totales {
-  const conIcopor = new Set(categorias.filter((c) => c.lleva_icopor).map((c) => c.nombre));
-  let subtotal = 0;
-  let unidadesIcopor = 0;
-  for (const it of items) {
-    subtotal += it.precio_unitario * it.cantidad;
-    if (conIcopor.has(it.categoria_nombre)) unidadesIcopor += it.cantidad;
+  const subtotal = items.reduce((s, it) => s + it.precio_unitario * it.cantidad, 0);
+  const nombrePorId = new Map(categorias.map((c) => [c.id, c.nombre]));
+  const aplicados: CargoAplicado[] = [];
+
+  for (const cargo of [...cargos].filter((c) => c.activo).sort((a, b) => a.orden - b.orden)) {
+    let valor = 0;
+    if (cargo.tipo === "por_pedido") {
+      if (!cargo.solo_domicilio || esDomicilio) valor = cargo.valor;
+    } else {
+      const nombres = new Set(cargo.categorias.map((id) => nombrePorId.get(id)).filter(Boolean));
+      const unidades = items.filter((it) => nombres.has(it.categoria_nombre)).reduce((s, it) => s + it.cantidad, 0);
+      valor = unidades * cargo.valor;
+    }
+    if (valor > 0) aplicados.push({ nombre: cargo.nombre, valor });
   }
-  const costoIcopor = unidadesIcopor * cfg.costo_icopor;
-  const costoDomicilio = esDomicilio ? cfg.costo_domicilio : 0;
-  return { subtotal, unidadesIcopor, costoIcopor, costoDomicilio, total: subtotal + costoIcopor + costoDomicilio };
+
+  const totalCargos = aplicados.reduce((s, c) => s + c.valor, 0);
+  return { subtotal, cargos: aplicados, totalCargos, total: subtotal + totalCargos };
 }
