@@ -166,7 +166,10 @@ export function ColaPedidos({ inicial, catalogoInicial, empleado, demo = false }
           )}
           <div className="leading-tight">
             <div className="text-lg font-black">{negocio.nombre}</div>
-            <div className="text-xs text-texto-suave">{hora12(ahora)}</div>
+            {/* El reloj del servidor y el del navegador pueden caer en minutos distintos */}
+            <div className="text-xs text-texto-suave" suppressHydrationWarning>
+              {hora12(ahora)}
+            </div>
           </div>
         </div>
 
@@ -182,7 +185,8 @@ export function ColaPedidos({ inicial, catalogoInicial, empleado, demo = false }
         </div>
 
         <div className="ml-auto flex items-center gap-2">
-          {empleado && (
+          {/* En la demo no hay sesión que cambiar ni cerrar */}
+          {empleado && !demo && (
             <Link href="/quien" className="btn bg-panel-2 px-3" title="Cambiar de usuario">
               <UserRound className="size-5" />
               <span className="hidden md:inline">{empleado.nombre}</span>
@@ -191,18 +195,21 @@ export function ColaPedidos({ inicial, catalogoInicial, empleado, demo = false }
           <button type="button" onClick={() => void recargarPedidos()} className="btn bg-panel-2 px-3" aria-label="Actualizar" title="Actualizar">
             <RefreshCw className={`size-5 ${refrescando ? "animate-spin" : ""}`} />
           </button>
-          {empleado?.es_dueno && (
+          {empleado?.es_dueno && !demo && (
             <Link href="/admin" className="btn bg-panel-2 px-3" title="Panel del dueño">
               <BarChart3 className="size-5" />
               <span className="hidden lg:inline">Panel</span>
             </Link>
           )}
-          <button type="button" onClick={() => void salir()} className="btn bg-panel-2 px-3" aria-label="Salir" title="Cerrar sesión">
-            <LogOut className="size-5" />
-          </button>
+          {!demo && (
+            <button type="button" onClick={() => void salir()} className="btn bg-panel-2 px-3" aria-label="Salir" title="Cerrar sesión">
+              <LogOut className="size-5" />
+            </button>
+          )}
           {/* Abre el formulario al instante: el menú ya está en memoria, no hay ida al servidor */}
           <button
             type="button"
+            data-tour="nuevo"
             disabled={!negocio.activo}
             onClick={() => setComposicion({ modo: "nuevo" })}
             className="btn bg-marca px-4 text-lg text-black sm:px-5"

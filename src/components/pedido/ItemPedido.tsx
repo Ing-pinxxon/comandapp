@@ -82,7 +82,7 @@ export function ItemPedido({ item, config, abierto, onAlternar, onCambiar, onCan
           )}
 
           {item.ingredientes.length > 0 && (
-            <div>
+            <div data-tour="ingredientes">
               <p className="mb-1.5 text-sm font-bold text-texto-suave">Toca un ingrediente para quitarlo</p>
               <div className="flex flex-wrap gap-2">
                 {item.ingredientes.map((ing) => {

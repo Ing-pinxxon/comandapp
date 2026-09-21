@@ -96,7 +96,7 @@ export function FormularioPedido({ catalogo, pedidoExistente, demo = false, onCe
       return;
     }
     if (demo) {
-      setError("Vista previa: aquí se guardaría el pedido en Supabase.");
+      setError("Esto es una demostración: el pedido no se guarda. Crea tu cuenta gratis para tomar pedidos de verdad.");
       return;
     }
     setGuardando(true);
@@ -131,7 +131,7 @@ export function FormularioPedido({ catalogo, pedidoExistente, demo = false, onCe
       {/* Cabecera */}
       <header className="flex items-center gap-3 border-b border-borde bg-fondo px-4 py-2.5">
         {comoCapa ? (
-          <button type="button" onClick={onCerrar} className="btn bg-panel-2 px-3" aria-label="Volver a la cola">
+          <button type="button" data-tour="volver" onClick={onCerrar} className="btn bg-panel-2 px-3" aria-label="Volver a la cola">
             <ArrowLeft className="size-6" />
           </button>
         ) : (
@@ -171,7 +171,7 @@ export function FormularioPedido({ catalogo, pedidoExistente, demo = false, onCe
             </button>
           </nav>
 
-          <div className="scroll-fino grid flex-1 auto-rows-min grid-cols-2 gap-3 overflow-y-auto p-3 md:grid-cols-3">
+          <div data-tour="productos" className="scroll-fino grid flex-1 auto-rows-min grid-cols-2 gap-3 overflow-y-auto p-3 md:grid-cols-3">
             {productosVisibles.map((p) => (
               <button
                 key={p.id}
@@ -265,7 +265,7 @@ export function FormularioPedido({ catalogo, pedidoExistente, demo = false, onCe
           </div>
 
           {/* Resumen fijo */}
-          <div className="border-t border-borde bg-panel p-4">
+          <div data-tour="totales" className="border-t border-borde bg-panel p-4">
             <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm text-texto-suave">
               <dt>Subtotal</dt>
               <dd className="text-right tabular-nums">{formatoCOP(totales.subtotal)}</dd>

@@ -43,7 +43,7 @@ export function TarjetaPedido({ pedido, ahora, config, ocupado, onEntregar, onCa
   const waCamino = urlWhatsApp(pedido.cliente_telefono, plantillaMensaje(config.mensajes_whatsapp.en_camino, datosMsg));
 
   return (
-    <article className={`relative flex flex-col rounded-2xl border-2 p-4 transition-colors ${estilo.tarjeta} ${porRevisar ? "ring-2 ring-editar ring-offset-2 ring-offset-fondo" : ""}`}>
+    <article data-tour="pedido" className={`relative flex flex-col rounded-2xl border-2 p-4 transition-colors ${estilo.tarjeta} ${porRevisar ? "ring-2 ring-editar ring-offset-2 ring-offset-fondo" : ""}`}>
       {/* Aviso de pedido traído por el bot y aún sin revisar */}
       {porRevisar && (
         <div className="mb-3 -mx-4 -mt-4 rounded-t-2xl bg-editar px-4 py-2 text-white">
@@ -162,7 +162,7 @@ export function TarjetaPedido({ pedido, ahora, config, ocupado, onEntregar, onCa
       <div className="mt-3 grid grid-cols-4 gap-2">
         {pendiente ? (
           <>
-            <button type="button" disabled={ocupado} onClick={onEntregar} className="btn col-span-2 bg-ok text-white">
+            <button type="button" data-tour="entregar" disabled={ocupado} onClick={onEntregar} className="btn col-span-2 bg-ok text-white">
               <Check className="size-6" /> Entregado
             </button>
             {onEditar ? (
