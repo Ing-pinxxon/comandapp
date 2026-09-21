@@ -106,6 +106,11 @@ export function createTour({ steps, storageKey = "tour_visto", padding = 8, onEn
 
   const $ = (sel: string) => pop.querySelector(sel) as HTMLElement;
 
+  const seVe = (el: Element) => {
+    const r = el.getBoundingClientRect();
+    return r.width > 0 && r.height > 0;
+  };
+
   // ---- ir a un paso ----
   function go(n: number) {
     clearWait();
@@ -113,8 +118,10 @@ export function createTour({ steps, storageKey = "tour_visto", padding = 8, onEn
     if (n < 0) return;
     idx = n;
     const s = steps[idx];
+    // Si el elemento no existe o está escondido (en celular media pantalla se
+    // oculta), el paso se salta en vez de resaltar un cuadro vacío.
     const el = document.querySelector(s.el);
-    if (!el) return go(n + 1); // si el elemento no existe, lo salta
+    if (!el || !seVe(el)) return go(n + 1);
 
     $(".t-step").textContent = `Paso ${idx + 1} de ${steps.length}`;
     $(".t-title").textContent = s.title;
