@@ -36,6 +36,8 @@ Daniel, como dueño de la plataforma, ve todos los negocios en `/plataforma` y p
    4. `supabase/04_realtime.sql`
    5. `supabase/05_integracion_bot.sql`
    6. `supabase/06_multinegocio.sql` ← convierte la base en multinegocio. Si había datos de Saboratto, los migra al negocio "Saboratto" y hace dueño y superadmin al usuario que tenía `perfiles.rol = 'admin'`.
+   7. `supabase/07_arreglo_pin.sql` ← los PIN usan `gen_salt` de pgcrypto, que en Supabase vive en el esquema `extensions`. Este script se lo indica a las cuatro funciones que lo necesitan.
+   8. `supabase/08_costos.sql` ← agrega el **costo** de cada producto y lo congela en cada venta, que es lo que permite ver la ganancia en el panel.
 3. **Authentication → Providers → Email:** activo, con **"Confirm email" activado**.
 4. **Authentication → URL Configuration:** *Site URL* = la URL de la app (en local `http://localhost:3000`), y en *Redirect URLs* agrega `http://localhost:3000/auth/callback` y la de producción (`https://tu-dominio/auth/callback`).
 5. **Google (opcional pero recomendado):**
@@ -53,6 +55,7 @@ Copia `.env.local.example` a `.env.local` y completa:
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase → Project Settings → API |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase → Project Settings → API (anon public) |
 | `GEMINI_API_KEY` | [aistudio.google.com/apikey](https://aistudio.google.com/apikey). Solo servidor: no lleva `NEXT_PUBLIC_`. |
+| `NEXT_PUBLIC_SITE_URL` | Opcional. La dirección pública del sitio, sin barra final (`https://comandapp.co`). Si falta, se usa sola la URL de producción de Vercel y, en local, `http://localhost:3000`. |
 
 ### 2.3 Correr en el PC
 
@@ -94,19 +97,49 @@ Si faltan variables el bot sigue funcionando igual y solo deja un aviso en sus r
 
 ---
 
-## 5. Seguridad de la tablet
+## 5. Que Google encuentre Comandapp
+
+La portada (`/`) y la demo (`/demo`) son las dos páginas hechas para buscadores. Todo lo demás —cola, panel, onboarding— está bloqueado en `robots.txt`: son pantallas privadas de cada negocio.
+
+- **Dirección del sitio.** Todo (canónicas, sitemap, imagen para compartir) sale de `sitioUrl()` en `src/lib/sitio.ts`. **Al comprar el dominio basta con poner `NEXT_PUBLIC_SITE_URL` en Vercel y volver a desplegar**; no hay direcciones escritas a mano en el código. Después: en Google Search Console, agrega la propiedad y envía `https://tu-dominio/sitemap.xml`.
+- **Archivos que genera Next solo:** `/robots.txt`, `/sitemap.xml`, `/manifest.webmanifest`, `/icon`, `/apple-icon` y `/opengraph-image` (la imagen de 1200×630 que se ve al compartir el enlace). `src/proxy.ts` los deja pasar sin sesión; si algún día vuelven a redirigir al login, Google deja de leer el sitio.
+- **Datos estructurados:** la portada incluye `SoftwareApplication` y `FAQPage` (las mismas preguntas que se ven en pantalla, en `src/components/landing/contenido.ts`). Si cambias una pregunta, cambia en los dos lados a la vez porque salen de la misma lista.
+- **Textos:** la app **no maneja mesas ni meseros** y así se dice en las preguntas frecuentes. Es a propósito: es mejor perder una visita que ganar un cliente decepcionado.
+- Aparecer en Google toma entre dos semanas y dos meses. Esto es la condición para lograrlo, no una garantía.
+
+## 6. La demo pública (`/demo`)
+
+Cualquiera puede probar la app sin cuenta: la cola con pedidos de ejemplo, el formulario con un menú de ejemplo y el panel con dos meses de ventas inventadas. No toca la base de datos y nada se guarda.
+
+- Los pedidos de la cola salen de `crearPedidosDemo()` (`src/app/vista-previa/datos-demo.ts`) y el historial del panel de `src/app/demo/datos-demo.ts`, con un generador de semilla fija: siempre las mismas cifras.
+- El **tutorial guiado** son nueve pasos definidos en `src/components/demo/pasos.ts`. Los pasos que esperan una acción se enganchan a los atributos `data-tour="…"` que hay en los componentes reales (`pedido`, `entregar`, `nuevo`, `productos`, `ingredientes`, `totales`, `volver`, `tab-panel`, `kpis`). **Si mueves uno de esos atributos, el paso se salta sin romper nada**, pero conviene revisarlo.
+- Se muestra una sola vez por navegador (`localStorage`); el botón "Ver el tutorial otra vez" lo reinicia.
+
+## 7. Costos y ganancia
+
+En `/admin/productos` cada producto tiene una casilla **Costo**: lo que cuesta prepararlo. Es opcional.
+
+- Al guardar un pedido, `guardar_pedido` **copia el costo de ese momento** a cada línea (`pedido_items.costo_unitario`). Si mañana sube el precio de la carne, los pedidos viejos no cambian.
+- El panel muestra **Ganancia estimada**, **Margen** y **Cobertura**: qué porcentaje de lo vendido tiene costo cargado. Con cobertura baja el número sirve de poco, por eso se muestra siempre al lado.
+- Lo que **no** descuenta: domicilio, empaque, arriendo, sueldos ni el acompañamiento de los combos (el costo es del producto solo). El panel lo dice en pantalla.
+
+---
+
+## 8. Seguridad de la tablet
 
 La tablet queda con la sesión del dueño abierta y los empleados se identifican por PIN. El PIN protege la pantalla, no la base de datos: alguien con la tablet en la mano y conocimientos técnicos podría leer los datos del negocio. **No dejes la tablet con la sesión abierta fuera del local** y cierra sesión si la prestas. Es el mismo funcionamiento de los sistemas de punto de venta.
 
 ---
 
-## 6. Estructura
+## 9. Estructura
 
 ```
-supabase/                 Scripts SQL (01 esquema … 06 multinegocio)
+supabase/                 Scripts SQL (01 esquema … 08 costos)
 src/proxy.ts              Rutas públicas y protección por sesión
 src/app/
   page.tsx                Landing pública
+  robots.ts, sitemap.ts, manifest.ts, icon.tsx, apple-icon.tsx, opengraph-image.tsx
+  demo                    Demo pública con tutorial guiado
   registro, login, recuperar, auth/callback, auth/cambiar-clave
   onboarding              Asistente: negocio → menú por foto → equipo
   quien                   Elegir empleado + PIN
@@ -114,8 +147,8 @@ src/app/
   admin/                  Resumen, pedidos, clientes, productos (+menu/importar), cargos, equipo, negocio, configuración
   plataforma              Solo superadmin: todos los negocios
   api/menu/analizar       Lee las fotos del menú con Gemini
-src/components/           comandas, pedido, admin, menu (ImportadorMenu), login, onboarding, plataforma, ui
-src/lib/                  tipos, precios (cargos), menu-ia, datos (Supabase), catalogo(-servidor), analitica, fechas, whatsapp
+src/components/           comandas, pedido, admin, demo, landing, menu (ImportadorMenu), login, onboarding, plataforma, ui
+src/lib/                  tipos, precios (cargos), menu-ia, datos (Supabase), catalogo(-servidor), analitica, fechas, whatsapp, sitio, tour
 ```
 
 Los totales se calculan en el navegador para mostrarlos en vivo **y** se recalculan en la base al guardar (`guardar_pedido`), así el registro siempre es consistente.
