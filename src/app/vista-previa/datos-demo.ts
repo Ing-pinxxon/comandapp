@@ -39,22 +39,22 @@ export const catalogoDemo: Catalogo = {
     { id: 2, negocio_id: NEGOCIO_ID, nombre: "Domicilio", tipo: "por_pedido", valor: 1000, categorias: [], solo_domicilio: true, activo: true, orden: 2 },
   ],
   productos: [
-    { id: 1, negocio_id: NEGOCIO_ID, categoria_id: 1, nombre: "Hamburguesa Tradicional", precio: 11500, precio_combo: 17500, ingredientes: ["Queso", "Cebolla Saboratto", "Lechuga", "Tomate", "Papa ripio", "Salsa de la casa"], activo: true, agotado: false, orden: 1 },
-    { id: 2, negocio_id: NEGOCIO_ID, categoria_id: 1, nombre: "Hamburguesa Especial", precio: 15000, precio_combo: 21000, ingredientes: ["Queso", "Cebolla Saboratto", "Lechuga", "Tomate", "Papa ripio", "Salsa de la casa", "Jamón ahumado", "Tocineta", "Huevo de codorniz"], activo: true, agotado: false, orden: 2 },
-    { id: 3, negocio_id: NEGOCIO_ID, categoria_id: 1, nombre: "Hamburguesa Ranchera", precio: 15000, precio_combo: 21000, ingredientes: ["Queso", "Cebolla Saboratto", "Lechuga", "Tomate", "Papa ripio", "Salsa de la casa", "Tocineta", "Huevo de codorniz"], activo: true, agotado: false, orden: 3 },
-    { id: 4, negocio_id: NEGOCIO_ID, categoria_id: 1, nombre: "Hamburguesa Con Todo", precio: 22000, precio_combo: 28000, ingredientes: ["Queso", "Cebolla Saboratto", "Lechuga", "Tomate", "Papa ripio", "Salsa de la casa", "Jamón ahumado", "Tocineta", "Huevo de codorniz"], activo: true, agotado: true, orden: 4 },
-    { id: 5, negocio_id: NEGOCIO_ID, categoria_id: 2, nombre: "Perro Caliente Tradicional", precio: 9000, precio_combo: null, ingredientes: ["Queso doble crema", "Cebolla Saboratto", "Papa ripio", "Salsa de la casa"], activo: true, agotado: false, orden: 1 },
-    { id: 6, negocio_id: NEGOCIO_ID, categoria_id: 2, nombre: "Perro Caliente Especial", precio: 13000, precio_combo: null, ingredientes: ["Queso doble crema", "Cebolla Saboratto", "Papa ripio", "Salsa de la casa", "Jamón ahumado", "Tocineta", "Huevo de codorniz"], activo: true, agotado: false, orden: 2 },
-    { id: 7, negocio_id: NEGOCIO_ID, categoria_id: 2, nombre: "Perro Caliente Ranchero", precio: 13000, precio_combo: null, ingredientes: ["Queso doble crema", "Cebolla Saboratto", "Papa ripio", "Salsa de la casa", "Tocineta"], activo: true, agotado: false, orden: 3 },
-    { id: 8, negocio_id: NEGOCIO_ID, categoria_id: 3, nombre: "Salchipapa Tradicional", precio: 10000, precio_combo: null, ingredientes: ["Queso", "Huevo de codorniz", "Salsa cheddar"], activo: true, agotado: false, orden: 1 },
-    { id: 9, negocio_id: NEGOCIO_ID, categoria_id: 3, nombre: "Salchipapa Ranchera", precio: 15000, precio_combo: null, ingredientes: ["Queso", "Huevo de codorniz", "Salsa cheddar", "Tocineta"], activo: true, agotado: false, orden: 2 },
-    { id: 10, negocio_id: NEGOCIO_ID, categoria_id: 3, nombre: "Salchipapa Doble", precio: 22000, precio_combo: null, ingredientes: ["Queso", "Huevo de codorniz", "Salsa cheddar", "Tocineta"], activo: true, agotado: false, orden: 3 },
-    { id: 11, negocio_id: NEGOCIO_ID, categoria_id: 4, nombre: "Sándwich con carne de hamburguesa", precio: 12000, precio_combo: null, ingredientes: ["Queso", "Cebolla Saboratto", "Lechuga", "Tomate", "Papa ripio", "Salsa de la casa"], activo: true, agotado: false, orden: 1 },
-    { id: 12, negocio_id: NEGOCIO_ID, categoria_id: 5, nombre: "Coca Cola pequeña original", precio: 2500, precio_combo: null, ingredientes: [], activo: true, agotado: false, orden: 1 },
-    { id: 13, negocio_id: NEGOCIO_ID, categoria_id: 5, nombre: "Coca Cola personal", precio: 3500, precio_combo: null, ingredientes: [], activo: true, agotado: false, orden: 2 },
-    { id: 14, negocio_id: NEGOCIO_ID, categoria_id: 5, nombre: "Coca Cola 1.5L", precio: 6500, precio_combo: null, ingredientes: [], activo: true, agotado: false, orden: 3 },
-    { id: 15, negocio_id: NEGOCIO_ID, categoria_id: 5, nombre: "Manzana pequeña", precio: 1500, precio_combo: null, ingredientes: [], activo: true, agotado: false, orden: 4 },
-    { id: 16, negocio_id: NEGOCIO_ID, categoria_id: 6, nombre: "Porción de papas", precio: 4000, precio_combo: null, ingredientes: [], activo: true, agotado: false, orden: 1 },
+    { id: 1, negocio_id: NEGOCIO_ID, categoria_id: 1, nombre: "Hamburguesa Tradicional", precio: 11500, precio_combo: 17500, costo: 4300, ingredientes: ["Queso", "Cebolla Saboratto", "Lechuga", "Tomate", "Papa ripio", "Salsa de la casa"], activo: true, agotado: false, orden: 1 },
+    { id: 2, negocio_id: NEGOCIO_ID, categoria_id: 1, nombre: "Hamburguesa Especial", precio: 15000, precio_combo: 21000, costo: 5800, ingredientes: ["Queso", "Cebolla Saboratto", "Lechuga", "Tomate", "Papa ripio", "Salsa de la casa", "Jamón ahumado", "Tocineta", "Huevo de codorniz"], activo: true, agotado: false, orden: 2 },
+    { id: 3, negocio_id: NEGOCIO_ID, categoria_id: 1, nombre: "Hamburguesa Ranchera", precio: 15000, precio_combo: 21000, costo: 5600, ingredientes: ["Queso", "Cebolla Saboratto", "Lechuga", "Tomate", "Papa ripio", "Salsa de la casa", "Tocineta", "Huevo de codorniz"], activo: true, agotado: false, orden: 3 },
+    { id: 4, negocio_id: NEGOCIO_ID, categoria_id: 1, nombre: "Hamburguesa Con Todo", precio: 22000, precio_combo: 28000, costo: 8400, ingredientes: ["Queso", "Cebolla Saboratto", "Lechuga", "Tomate", "Papa ripio", "Salsa de la casa", "Jamón ahumado", "Tocineta", "Huevo de codorniz"], activo: true, agotado: true, orden: 4 },
+    { id: 5, negocio_id: NEGOCIO_ID, categoria_id: 2, nombre: "Perro Caliente Tradicional", precio: 9000, precio_combo: null, costo: 3200, ingredientes: ["Queso doble crema", "Cebolla Saboratto", "Papa ripio", "Salsa de la casa"], activo: true, agotado: false, orden: 1 },
+    { id: 6, negocio_id: NEGOCIO_ID, categoria_id: 2, nombre: "Perro Caliente Especial", precio: 13000, precio_combo: null, costo: 4900, ingredientes: ["Queso doble crema", "Cebolla Saboratto", "Papa ripio", "Salsa de la casa", "Jamón ahumado", "Tocineta", "Huevo de codorniz"], activo: true, agotado: false, orden: 2 },
+    { id: 7, negocio_id: NEGOCIO_ID, categoria_id: 2, nombre: "Perro Caliente Ranchero", precio: 13000, precio_combo: null, costo: 4700, ingredientes: ["Queso doble crema", "Cebolla Saboratto", "Papa ripio", "Salsa de la casa", "Tocineta"], activo: true, agotado: false, orden: 3 },
+    { id: 8, negocio_id: NEGOCIO_ID, categoria_id: 3, nombre: "Salchipapa Tradicional", precio: 10000, precio_combo: null, costo: 3600, ingredientes: ["Queso", "Huevo de codorniz", "Salsa cheddar"], activo: true, agotado: false, orden: 1 },
+    { id: 9, negocio_id: NEGOCIO_ID, categoria_id: 3, nombre: "Salchipapa Ranchera", precio: 15000, precio_combo: null, costo: 5500, ingredientes: ["Queso", "Huevo de codorniz", "Salsa cheddar", "Tocineta"], activo: true, agotado: false, orden: 2 },
+    { id: 10, negocio_id: NEGOCIO_ID, categoria_id: 3, nombre: "Salchipapa Doble", precio: 22000, precio_combo: null, costo: 8200, ingredientes: ["Queso", "Huevo de codorniz", "Salsa cheddar", "Tocineta"], activo: true, agotado: false, orden: 3 },
+    { id: 11, negocio_id: NEGOCIO_ID, categoria_id: 4, nombre: "Sándwich con carne de hamburguesa", precio: 12000, precio_combo: null, costo: 4300, ingredientes: ["Queso", "Cebolla Saboratto", "Lechuga", "Tomate", "Papa ripio", "Salsa de la casa"], activo: true, agotado: false, orden: 1 },
+    { id: 12, negocio_id: NEGOCIO_ID, categoria_id: 5, nombre: "Coca Cola pequeña original", precio: 2500, precio_combo: null, costo: 1400, ingredientes: [], activo: true, agotado: false, orden: 1 },
+    { id: 13, negocio_id: NEGOCIO_ID, categoria_id: 5, nombre: "Coca Cola personal", precio: 3500, precio_combo: null, costo: 1900, ingredientes: [], activo: true, agotado: false, orden: 2 },
+    { id: 14, negocio_id: NEGOCIO_ID, categoria_id: 5, nombre: "Coca Cola 1.5L", precio: 6500, precio_combo: null, costo: 3400, ingredientes: [], activo: true, agotado: false, orden: 3 },
+    { id: 15, negocio_id: NEGOCIO_ID, categoria_id: 5, nombre: "Manzana pequeña", precio: 1500, precio_combo: null, costo: 800, ingredientes: [], activo: true, agotado: false, orden: 4 },
+    { id: 16, negocio_id: NEGOCIO_ID, categoria_id: 6, nombre: "Porción de papas", precio: 4000, precio_combo: null, costo: 1500, ingredientes: [], activo: true, agotado: false, orden: 1 },
   ],
 };
 
@@ -108,7 +108,12 @@ const item = (nombre: string, categoria: string, precio: number, cantidad = 1, e
   ...extra,
 });
 
-export const pedidosDemo: PedidoConItems[] = [
+/**
+ * Pedidos de ejemplo con las horas contadas desde AHORA. Es una función a
+ * propósito: como constante, el servidor la congelaría en el primer arranque y
+ * los minutos no cuadrarían con los que calcula el navegador.
+ */
+export const crearPedidosDemo = (): PedidoConItems[] => [
   pedido(1, 1, 31, "Carlos Gómez", "3001234567", [item("Hamburguesa Ranchera", "Hamburguesas", 21000, 2, { es_combo: true }), item("Coca Cola 1.5L", "Bebidas", 6500)], { metodo_pago: "nequi" }),
   pedido(2, 2, 19, "Ana María Ruiz", "3109876543", [item("Perro Caliente Especial", "Perros", 13000, 2, { exclusiones: ["Cebolla Saboratto"] }), item("Salchipapa Tradicional", "Salchipapas", 10000)]),
   pedido(3, 3, 7, "Julián Torres", "3205551212", [item("Hamburguesa Tradicional", "Hamburguesas", 11500, 1, { exclusiones: ["Tomate", "Lechuga"], nota: "bien asada" }), item("Porción de papas", "Adicionales", 4000)], { notas: "Timbrar dos veces", metodo_pago: "daviplata" }),

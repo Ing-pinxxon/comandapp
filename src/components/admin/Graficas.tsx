@@ -20,17 +20,36 @@ export function Panel({ titulo, children, vacio }: { titulo: string; children: R
 const fmtCOP = (v: number) => formatoCOP(v);
 const fmtMiles = (v: number) => (v >= 1000 ? `$${Math.round(v / 1000)}k` : `$${v}`);
 
-export function GraficaVentasPorDia({ datos }: { datos: SerieDoble[] }) {
+/**
+ * Ventas y pedidos por día. Si llegan los días del periodo anterior se dibujan
+ * detrás con línea gris punteada, alineados por posición (día 1 contra día 1).
+ */
+export function GraficaVentasPorDia({ datos, anteriores }: { datos: SerieDoble[]; anteriores?: SerieDoble[] }) {
+  const hayAntes = Boolean(anteriores?.some((d) => d.ventas > 0));
+  const serie = hayAntes ? datos.map((d, i) => ({ ...d, ventasAntes: anteriores?.[i]?.ventas ?? null })) : datos;
   return (
     <Panel titulo="Ventas por día" vacio={datos.length === 0}>
       <ResponsiveContainer>
-        <LineChart data={datos} margin={{ left: 8, right: 8, top: 8 }}>
+        <LineChart data={serie} margin={{ left: 8, right: 8, top: 8 }}>
           <CartesianGrid stroke="#2e2e33" vertical={false} />
           <XAxis dataKey="etiqueta" tick={EJE} tickFormatter={(v: string) => v.slice(5)} />
           <YAxis yAxisId="ventas" tick={EJE} tickFormatter={fmtMiles} width={52} />
           <YAxis yAxisId="pedidos" orientation="right" tick={EJE} width={32} allowDecimals={false} />
-          <Tooltip {...TOOLTIP} formatter={(v, n) => (n === "Ventas" ? fmtCOP(Number(v)) : v)} />
+          <Tooltip {...TOOLTIP} formatter={(v, n) => (n === "Pedidos" ? v : fmtCOP(Number(v)))} />
           <Legend />
+          {hayAntes && (
+            <Line
+              yAxisId="ventas"
+              type="monotone"
+              dataKey="ventasAntes"
+              name="Periodo anterior"
+              stroke="#71717a"
+              strokeWidth={2}
+              strokeDasharray="5 4"
+              dot={false}
+              connectNulls
+            />
+          )}
           <Line yAxisId="ventas" type="monotone" dataKey="ventas" name="Ventas" stroke="#f97316" strokeWidth={3} dot={{ r: 4 }} />
           <Line yAxisId="pedidos" type="monotone" dataKey="pedidos" name="Pedidos" stroke="#3b82f6" strokeWidth={2} dot={{ r: 3 }} />
         </LineChart>

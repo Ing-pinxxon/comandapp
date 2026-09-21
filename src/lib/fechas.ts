@@ -1,4 +1,4 @@
-// Utilidades de fecha/hora en la zona horaria de Saboratto (America/Bogota) y formato es-CO.
+// Utilidades de fecha/hora en la zona horaria del negocio (America/Bogota) y formato es-CO.
 
 export const ZONA = "America/Bogota";
 
@@ -126,6 +126,23 @@ export function rangoPredefinido(clave: Exclude<RangoClave, "personalizado">, ah
     case "mes":
       return { desde: hoy.slice(0, 8) + "01", hasta: hoy };
   }
+}
+
+/** Días que abarca un rango, contando ambos extremos */
+export function diasDelRango(rango: Rango): number {
+  const [y1, m1, d1] = rango.desde.split("-").map(Number);
+  const [y2, m2, d2] = rango.hasta.split("-").map(Number);
+  const ms = Date.UTC(y2, m2 - 1, d2) - Date.UTC(y1, m1 - 1, d1);
+  return Math.max(1, Math.round(ms / 86_400_000) + 1);
+}
+
+/**
+ * El periodo inmediatamente anterior, del mismo largo. Se usa para comparar:
+ * hoy contra ayer, esta semana contra los siete días previos, y así.
+ */
+export function rangoAnterior(rango: Rango): Rango {
+  const dias = diasDelRango(rango);
+  return { desde: sumarDias(rango.desde, -dias), hasta: sumarDias(rango.desde, -1) };
 }
 
 /** Convierte un rango de días de negocio a límites timestamptz (ISO) en Bogotá */

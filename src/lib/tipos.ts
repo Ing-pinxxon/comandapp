@@ -77,6 +77,8 @@ export interface Producto {
   nombre: string;
   precio: number;
   precio_combo: number | null;
+  /** Lo que le cuesta al negocio producirlo. Vacío = todavía no lo cargó */
+  costo: number | null;
   ingredientes: string[];
   activo: boolean;
   agotado: boolean;
@@ -150,6 +152,8 @@ export interface PedidoItem {
   nombre: string;
   categoria_nombre: string;
   precio_unitario: number; // precio cobrado por unidad (ya incluye el combo)
+  /** Costo del producto el día de la venta; se copia al guardar para no reescribir la historia */
+  costo_unitario?: number | null;
   cantidad: number;
   es_combo: boolean;
   exclusiones: string[];

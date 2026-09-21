@@ -17,8 +17,23 @@ interface Borrador {
   nombre: string;
   precio: string;
   precio_combo: string;
+  costo: string;
   ingredientes: string;
   categoria_id: number;
+}
+
+const VACIO: Omit<Borrador, "categoria_id"> = { nombre: "", precio: "", precio_combo: "", costo: "", ingredientes: "" };
+
+/** Lo que deja el producto por unidad, al lado del costo */
+function MargenProducto({ precio, costo }: { precio: number; costo: number }) {
+  if (!precio) return null;
+  const ganancia = precio - costo;
+  const porcentaje = Math.round((ganancia / precio) * 100);
+  return (
+    <div className={`text-xs font-bold ${ganancia < 0 ? "text-peligro" : "text-ok"}`}>
+      {formatoCOP(ganancia)} · {porcentaje}%
+    </div>
+  );
 }
 
 export function GestionProductos() {
@@ -80,7 +95,14 @@ export function GestionProductos() {
   }
 
   function borradorDe(p: Producto): Borrador {
-    return { nombre: p.nombre, precio: String(p.precio), precio_combo: p.precio_combo ? String(p.precio_combo) : "", ingredientes: p.ingredientes.join(", "), categoria_id: p.categoria_id };
+    return {
+      nombre: p.nombre,
+      precio: String(p.precio),
+      precio_combo: p.precio_combo ? String(p.precio_combo) : "",
+      costo: p.costo === null ? "" : String(p.costo),
+      ingredientes: p.ingredientes.join(", "),
+      categoria_id: p.categoria_id,
+    };
   }
 
   function desdeBorrador(b: Borrador) {
@@ -88,6 +110,7 @@ export function GestionProductos() {
       nombre: b.nombre.trim(),
       precio: Number(b.precio.replace(/\D/g, "")) || 0,
       precio_combo: b.precio_combo.trim() ? Number(b.precio_combo.replace(/\D/g, "")) : null,
+      costo: b.costo.trim() ? Number(b.costo.replace(/\D/g, "")) : null,
       ingredientes: b.ingredientes.split(",").map((s) => s.trim()).filter(Boolean),
       categoria_id: b.categoria_id,
     };
@@ -148,7 +171,7 @@ export function GestionProductos() {
           <button
             type="button"
             disabled={catalogo.categorias.length === 0}
-            onClick={() => setNuevo({ nombre: "", precio: "", precio_combo: "", ingredientes: "", categoria_id: catalogo.categorias[0]?.id ?? 0 })}
+            onClick={() => setNuevo({ ...VACIO, categoria_id: catalogo.categorias[0]?.id ?? 0 })}
             className="btn bg-marca text-black"
           >
             <Plus className="size-5" /> Nuevo producto
@@ -159,6 +182,10 @@ export function GestionProductos() {
       {ok && <Aviso tipo="ok">{ok}</Aviso>}
       <p className="text-sm text-texto-suave">
         <b>Agotado</b> lo deja visible pero sin poder agregarse hoy. <b>Oculto</b> lo quita del menú. Los cambios se ven de inmediato en las tablets.
+      </p>
+      <p className="text-sm text-texto-suave">
+        El <b>costo</b> es lo que te cuesta prepararlo. Es opcional, pero sin él el panel no puede calcular tu ganancia. Se guarda con cada venta: si mañana
+        cambias el costo, los pedidos viejos no se alteran.
       </p>
 
       {porCategoria.map(({ categoria, productos }) => (
@@ -173,6 +200,7 @@ export function GestionProductos() {
                 <th className="py-1">Nombre</th>
                 <th className="w-28">Precio</th>
                 {categoria.permite_combo && <th className="w-28">Combo</th>}
+                <th className="w-36">Costo</th>
                 <th>Ingredientes que se pueden quitar</th>
                 <th className="w-56 text-right">Acciones</th>
               </tr>
@@ -194,6 +222,18 @@ export function GestionProductos() {
                         {b ? <input className="campo min-h-10" inputMode="numeric" value={b.precio_combo} onChange={(e) => setEditando({ ...editando, [p.id]: { ...b, precio_combo: e.target.value } })} placeholder="auto" /> : p.precio_combo ? formatoCOP(p.precio_combo) : <span className="text-texto-suave">+{formatoCOP(catalogo.config.extra_combo)}</span>}
                       </td>
                     )}
+                    <td className="pr-2 tabular-nums">
+                      {b ? (
+                        <input className="campo min-h-10" inputMode="numeric" value={b.costo} onChange={(e) => setEditando({ ...editando, [p.id]: { ...b, costo: e.target.value.replace(/\D/g, "") } })} placeholder="sin costo" />
+                      ) : p.costo === null ? (
+                        <span className="text-texto-suave">sin costo</span>
+                      ) : (
+                        <>
+                          {formatoCOP(p.costo)}
+                          <MargenProducto precio={p.precio} costo={p.costo} />
+                        </>
+                      )}
+                    </td>
                     <td className="pr-2 text-texto-suave">
                       {b ? <input className="campo min-h-10" value={b.ingredientes} onChange={(e) => setEditando({ ...editando, [p.id]: { ...b, ingredientes: e.target.value } })} placeholder="Queso, Cebolla, ..." /> : p.ingredientes.join(", ") || "—"}
                     </td>
@@ -241,7 +281,7 @@ export function GestionProductos() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => setNuevo({ nombre: c.nombre, precio: String(Math.round(c.ventas / c.unidades)), precio_combo: "", ingredientes: "", categoria_id: catalogo.categorias.find((k) => k.nombre === c.categoria)?.id ?? catalogo.categorias[0].id })}
+                  onClick={() => setNuevo({ ...VACIO, nombre: c.nombre, precio: String(Math.round(c.ventas / c.unidades)), categoria_id: catalogo.categorias.find((k) => k.nombre === c.categoria)?.id ?? catalogo.categorias[0].id })}
                   className="btn min-h-10 bg-marca/20 px-3 text-marca-oscuro"
                 >
                   <Plus className="size-4" /> Al menú
@@ -262,8 +302,13 @@ export function GestionProductos() {
               </select>
             </label>
             <label className="block"><span className="mb-1 block text-sm text-texto-suave">Precio *</span><input className="campo" inputMode="numeric" value={nuevo.precio} onChange={(e) => setNuevo({ ...nuevo, precio: e.target.value.replace(/\D/g, "") })} /></label>
-            <label className="block"><span className="mb-1 block text-sm text-texto-suave">Precio combo (opcional, solo hamburguesas)</span><input className="campo" inputMode="numeric" value={nuevo.precio_combo} onChange={(e) => setNuevo({ ...nuevo, precio_combo: e.target.value.replace(/\D/g, "") })} placeholder={`auto: precio + ${formatoCOP(catalogo.config.extra_combo)}`} /></label>
-            <label className="block"><span className="mb-1 block text-sm text-texto-suave">Ingredientes que se pueden quitar (separados por coma)</span><input className="campo" value={nuevo.ingredientes} onChange={(e) => setNuevo({ ...nuevo, ingredientes: e.target.value })} placeholder="Queso, Cebolla Saboratto, Lechuga" /></label>
+            <label className="block"><span className="mb-1 block text-sm text-texto-suave">Precio combo (opcional)</span><input className="campo" inputMode="numeric" value={nuevo.precio_combo} onChange={(e) => setNuevo({ ...nuevo, precio_combo: e.target.value.replace(/\D/g, "") })} placeholder={`auto: precio + ${formatoCOP(catalogo.config.extra_combo)}`} /></label>
+            <label className="block">
+              <span className="mb-1 block text-sm text-texto-suave">Costo (opcional): lo que te cuesta prepararlo</span>
+              <input className="campo" inputMode="numeric" value={nuevo.costo} onChange={(e) => setNuevo({ ...nuevo, costo: e.target.value.replace(/\D/g, "") })} placeholder="Ej: 5500" />
+              {nuevo.costo && nuevo.precio && <MargenProducto precio={Number(nuevo.precio)} costo={Number(nuevo.costo)} />}
+            </label>
+            <label className="block"><span className="mb-1 block text-sm text-texto-suave">Ingredientes que se pueden quitar (separados por coma)</span><input className="campo" value={nuevo.ingredientes} onChange={(e) => setNuevo({ ...nuevo, ingredientes: e.target.value })} placeholder="Queso, Cebolla, Lechuga" /></label>
             <button type="submit" disabled={!nuevo.nombre.trim() || !nuevo.precio} className="btn w-full bg-marca text-black"><Plus className="size-5" /> Agregar al menú</button>
           </form>
         )}

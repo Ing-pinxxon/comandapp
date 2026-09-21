@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { cargarPedidosRango, mensajeError } from "@/lib/datos";
 import { useNegocio } from "@/components/NegocioProvider";
-import { rangoPredefinido, type Rango, type RangoClave } from "@/lib/fechas";
+import { rangoAnterior, rangoPredefinido, type Rango, type RangoClave } from "@/lib/fechas";
 import type { PedidoConItems } from "@/lib/tipos";
 
 /** Rango de fechas guardado en la URL (?rango=hoy | ayer | semana | mes | personalizado&desde&hasta) */
@@ -37,21 +37,27 @@ export function useRangoURL() {
   return { clave, rango, cambiar };
 }
 
-/** Carga los pedidos del rango y los mantiene actualizados al cambiar el rango */
+/**
+ * Carga los pedidos del rango y, en la misma tanda, los del periodo anterior
+ * para poder comparar. Se mantienen actualizados al cambiar el rango.
+ */
 export function usePedidosRango(rango: Rango) {
   const { negocio } = useNegocio();
   const negocioId = negocio.id;
   const [pedidos, setPedidos] = useState<PedidoConItems[]>([]);
+  const [anteriores, setAnteriores] = useState<PedidoConItems[]>([]);
   const [rangoCargado, setRangoCargado] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const claveRango = `${negocioId}|${rango.desde}|${rango.hasta}`;
 
   useEffect(() => {
     let vigente = true;
-    cargarPedidosRango(negocioId, rango)
-      .then((p) => {
+    const previo = rangoAnterior(rango);
+    Promise.all([cargarPedidosRango(negocioId, rango), cargarPedidosRango(negocioId, previo)])
+      .then(([actuales, previos]) => {
         if (!vigente) return;
-        setPedidos(p);
+        setPedidos(actuales);
+        setAnteriores(previos);
         setError(null);
       })
       .catch((e) => vigente && setError(mensajeError(e)))
@@ -70,5 +76,5 @@ export function usePedidosRango(rango: Rango) {
     }
   }, [rango, negocioId]);
 
-  return { pedidos, cargando: rangoCargado !== claveRango, error, recargar };
+  return { pedidos, anteriores, cargando: rangoCargado !== claveRango, error, recargar };
 }
