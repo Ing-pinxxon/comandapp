@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { FormularioAcceso } from "@/components/login/FormularioAcceso";
 
-export const metadata = { title: "Crear cuenta · Comandapp" };
+export const metadata = { title: "Crear cuenta gratis" };
 
 export default function PaginaRegistro() {
   return (

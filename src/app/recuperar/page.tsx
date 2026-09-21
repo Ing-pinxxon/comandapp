@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { FormularioAcceso } from "@/components/login/FormularioAcceso";
 
-export const metadata = { title: "Recuperar contraseña · Comandapp" };
+export const metadata = { title: "Recuperar contraseña" };
 
 export default function PaginaRecuperar() {
   return (

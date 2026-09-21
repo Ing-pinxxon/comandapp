@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { FormularioAcceso } from "@/components/login/FormularioAcceso";
 
-export const metadata = { title: "Iniciar sesión · Comandapp" };
+export const metadata = { title: "Iniciar sesión" };
 
 export default function PaginaLogin() {
   return (

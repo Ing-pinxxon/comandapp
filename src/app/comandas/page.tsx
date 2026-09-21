@@ -3,7 +3,7 @@ import { empleadoActual, negocioActual, sesionActual } from "@/lib/supabase/serv
 import { catalogoServidor, pedidosHoyServidor } from "@/lib/catalogo-servidor";
 import { ColaPedidos } from "@/components/comandas/ColaPedidos";
 
-export const metadata = { title: "Cola de pedidos · Comandapp" };
+export const metadata = { title: "Cola de pedidos", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
 
 export default async function PaginaComandas() {

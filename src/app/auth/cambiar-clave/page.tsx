@@ -1,6 +1,6 @@
 import { FormularioCambiarClave } from "@/components/login/FormularioCambiarClave";
 
-export const metadata = { title: "Nueva contraseña · Comandapp" };
+export const metadata = { title: "Nueva contraseña", robots: { index: false, follow: false } };
 
 export default function PaginaCambiarClave() {
   return (

@@ -1,55 +1,90 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { ArrowRight, Camera, Check, Clock, MessageCircle, Smartphone, UsersRound, BarChart3 } from "lucide-react";
-import { sesionActual } from "@/lib/supabase/server";
+import { ArrowRight, BarChart3, Camera, Check, Clock, MessageCircle, PlayCircle, Smartphone, UsersRound } from "lucide-react";
+import { DESCRIPCION_SITIO, PALABRAS_CLAVE, TITULO_SITIO, sitioUrl } from "@/lib/sitio";
+import { INCLUYE_PLAN, PREGUNTAS } from "@/components/landing/contenido";
+import { BotonWhatsApp } from "@/components/landing/BotonWhatsApp";
 import { Logotipo } from "@/components/ui/Logotipo";
 
 export const metadata = {
-  title: "Comandapp · Comandas y cola de pedidos para tu negocio de comida",
-  description: "Toma pedidos en la tablet, míralos en cocina con semáforo de tiempo y conoce qué vendes. Sube una foto de tu carta y la IA arma tu menú.",
+  title: TITULO_SITIO,
+  description: DESCRIPCION_SITIO,
+  keywords: PALABRAS_CLAVE,
+  alternates: { canonical: "/" },
 };
-export const dynamic = "force-dynamic";
 
 const PASOS = [
-  { Icono: Camera, titulo: "Sube una foto de tu carta", texto: "La IA lee los productos y precios. Tú revisas y listo." },
+  { Icono: Camera, titulo: "Sube una foto de tu carta", texto: "La inteligencia artificial lee los productos y precios. Tú revisas y listo." },
   { Icono: UsersRound, titulo: "Crea tu equipo con PIN", texto: "Cada empleado entra con su PIN en la tablet. Sabes quién tomó cada pedido." },
   { Icono: Smartphone, titulo: "Toma pedidos y despacha", texto: "La cola se pone verde, amarilla o naranja según el tiempo. Nada se te pasa." },
 ];
 
 const BENEFICIOS = [
-  { Icono: Clock, titulo: "Semáforo de tiempos", texto: "Cada pedido muestra los minutos que lleva. Verde, amarillo, naranja: la cocina sabe qué va primero." },
-  { Icono: MessageCircle, titulo: "WhatsApp con un toque", texto: "Avisa al cliente que su pedido está listo o va en camino con un mensaje prearmado." },
-  { Icono: BarChart3, titulo: "Sabes qué vendes", texto: "Ventas por día, horas pico, productos más vendidos, clientes frecuentes y exportación a Excel." },
-  { Icono: Check, titulo: "Cargos a tu medida", texto: "Domicilio, empaque, propina, combos. Tú defines qué se cobra y cuándo." },
+  { Icono: Clock, titulo: "Semáforo de tiempos en cocina", texto: "Cada pedido muestra los minutos que lleva. Verde, amarillo, naranja: la cocina sabe qué va primero y ningún cliente espera de más." },
+  { Icono: MessageCircle, titulo: "Avisos por WhatsApp", texto: "Con un toque le dices al cliente que su pedido está listo o va en camino. Si tienes un bot de pedidos, sus comandas entran solas a la cola." },
+  { Icono: BarChart3, titulo: "Sabes qué vendes y cuánto ganas", texto: "Ventas por día, horas pico, productos más vendidos, clientes frecuentes y la ganancia real si cargas tus costos. Todo exportable a Excel." },
+  { Icono: Check, titulo: "Domicilio y empaque automáticos", texto: "Configura tus propios cargos: domicilio, empaque, propina o combos. El total sale bien sin que nadie tenga que calcular nada." },
 ];
 
-export default async function Inicio() {
-  if (await sesionActual()) redirect("/comandas");
+export default function Inicio() {
+  const base = sitioUrl();
+
+  // Datos estructurados: así Google entiende qué es Comandapp y puede mostrar
+  // las preguntas frecuentes desplegadas en los resultados de búsqueda.
+  const datosEstructurados = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "SoftwareApplication",
+        name: "Comandapp",
+        applicationCategory: "BusinessApplication",
+        operatingSystem: "Web",
+        url: base,
+        description: DESCRIPCION_SITIO,
+        inLanguage: "es",
+        offers: { "@type": "Offer", price: "0", priceCurrency: "COP", description: "Gratis durante el lanzamiento" },
+      },
+      {
+        "@type": "FAQPage",
+        mainEntity: PREGUNTAS.map((p) => ({
+          "@type": "Question",
+          name: p.pregunta,
+          acceptedAnswer: { "@type": "Answer", text: p.respuesta },
+        })),
+      },
+    ],
+  };
 
   return (
     <main className="flex-1">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(datosEstructurados) }} />
+
       <header className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4">
         <Logotipo />
         <nav className="flex items-center gap-2">
+          <Link href="/demo" className="btn min-h-10 bg-transparent px-3 text-texto-suave">Ver demo</Link>
           <Link href="/login" className="btn min-h-10 bg-transparent px-3 text-texto-suave">Iniciar sesión</Link>
           <Link href="/registro" className="btn min-h-10 bg-negro px-4 text-white">Crear cuenta gratis</Link>
         </nav>
       </header>
 
+      {/* ===== Portada ===== */}
       <section className="mx-auto grid max-w-6xl items-center gap-10 px-5 py-12 lg:grid-cols-2 lg:py-20">
         <div>
-          <span className="inline-block rounded-full bg-marca/20 px-3 py-1 text-xs font-bold uppercase tracking-wide text-marca-oscuro">Para restaurantes y comidas rápidas</span>
+          <span className="inline-block rounded-full bg-marca/20 px-3 py-1 text-xs font-bold uppercase tracking-wide text-marca-oscuro">
+            Para restaurantes, comidas rápidas y domicilios
+          </span>
           <h1 className="mt-4 text-4xl font-black leading-tight tracking-tight sm:text-5xl">
             Tus pedidos en orden. <span className="text-marca-oscuro">Tu cocina a tiempo.</span>
           </h1>
           <p className="mt-4 text-lg text-texto-suave">
-            Comandapp es la pantalla de comandas para tu tablet: toma pedidos, míralos en cocina con semáforo de tiempo, avisa al cliente por WhatsApp y descubre qué es lo que más vendes.
+            Comandapp es el sistema de comandas para tu tablet: toma pedidos, míralos en cocina con semáforo de tiempos, avisa al cliente por
+            WhatsApp y descubre qué es lo que más vendes.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Link href="/registro" className="btn bg-marca px-6 text-lg text-black">Empezar gratis <ArrowRight className="size-5" /></Link>
-            <Link href="/login" className="btn bg-panel px-6 text-lg">Ya tengo cuenta</Link>
+            <Link href="/demo" className="btn bg-panel px-6 text-lg"><PlayCircle className="size-5" /> Ver cómo funciona</Link>
           </div>
-          <p className="mt-3 text-sm text-texto-suave">Sin tarjeta. Tu negocio queda listo en menos de cinco minutos.</p>
+          <p className="mt-3 text-sm text-texto-suave">Sin tarjeta y sin instalar nada. La demo no pide registro.</p>
         </div>
 
         {/* Ilustración de la cola */}
@@ -82,6 +117,7 @@ export default async function Inicio() {
         </div>
       </section>
 
+      {/* ===== Tres pasos ===== */}
       <section className="bg-negro py-14 text-white">
         <div className="mx-auto max-w-6xl px-5">
           <h2 className="text-center text-3xl font-black">Listo en tres pasos</h2>
@@ -97,9 +133,15 @@ export default async function Inicio() {
               </div>
             ))}
           </div>
+          <div className="mt-8 text-center">
+            <Link href="/demo" className="btn bg-marca px-6 text-lg text-black">
+              <PlayCircle className="size-5" /> Probar la demo, sin registro
+            </Link>
+          </div>
         </div>
       </section>
 
+      {/* ===== Beneficios ===== */}
       <section className="mx-auto max-w-6xl px-5 py-14">
         <h2 className="text-center text-3xl font-black">Todo lo que necesita tu operación</h2>
         <div className="mt-8 grid gap-4 sm:grid-cols-2">
@@ -113,14 +155,79 @@ export default async function Inicio() {
             </div>
           ))}
         </div>
-        <div className="mt-10 text-center">
-          <Link href="/registro" className="btn bg-negro px-8 text-lg text-white">Crear mi cuenta <ArrowRight className="size-5" /></Link>
+      </section>
+
+      {/* ===== Precio ===== */}
+      <section id="precio" className="mx-auto max-w-6xl px-5 py-14">
+        <h2 className="text-center text-3xl font-black">Cuánto cuesta</h2>
+        <p className="mx-auto mt-2 max-w-xl text-center text-texto-suave">
+          Estamos empezando y queremos que lo uses de verdad antes de cobrarte.
+        </p>
+        <div className="mx-auto mt-8 max-w-md">
+          <div className="tarjeta border-2 border-marca p-6 text-center">
+            <span className="inline-block rounded-full bg-marca px-3 py-1 text-xs font-black uppercase tracking-wide text-black">Lanzamiento</span>
+            <div className="mt-4 text-5xl font-black">Gratis</div>
+            <p className="mt-2 text-texto-suave">Sin tarjeta, sin límite de pedidos y sin letra pequeña.</p>
+            <ul className="mt-6 space-y-2 text-left">
+              {INCLUYE_PLAN.map((linea) => (
+                <li key={linea} className="flex items-start gap-2">
+                  <Check className="mt-0.5 size-5 shrink-0 text-ok" />
+                  <span>{linea}</span>
+                </li>
+              ))}
+            </ul>
+            <Link href="/registro" className="btn mt-6 w-full bg-negro text-lg text-white">
+              Crear mi cuenta <ArrowRight className="size-5" />
+            </Link>
+            <p className="mt-3 text-xs text-texto-suave">
+              Cuando empecemos a cobrar te avisamos con un mes de anticipación. Tus datos siguen siendo tuyos.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ===== Preguntas frecuentes ===== */}
+      <section id="preguntas" className="mx-auto max-w-3xl px-5 py-14">
+        <h2 className="text-center text-3xl font-black">Preguntas frecuentes</h2>
+        <div className="mt-8 space-y-3">
+          {PREGUNTAS.map((p) => (
+            <details key={p.pregunta} className="tarjeta group p-4">
+              <summary className="cursor-pointer list-none text-lg font-extrabold marker:content-none">
+                <span className="flex items-center justify-between gap-3">
+                  {p.pregunta}
+                  <span className="shrink-0 text-2xl font-black text-marca-oscuro transition group-open:rotate-45">+</span>
+                </span>
+              </summary>
+              <p className="mt-3 text-texto-suave">{p.respuesta}</p>
+            </details>
+          ))}
+        </div>
+      </section>
+
+      {/* ===== Cierre ===== */}
+      <section className="bg-negro py-14 text-white">
+        <div className="mx-auto max-w-3xl px-5 text-center">
+          <h2 className="text-3xl font-black">Empieza hoy, te toma cinco minutos</h2>
+          <p className="mt-3 text-white/70">Crea tu cuenta, sube una foto de tu carta y esta misma noche estás tomando pedidos en la tablet.</p>
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
+            <Link href="/registro" className="btn bg-marca px-8 text-lg text-black">Crear cuenta gratis <ArrowRight className="size-5" /></Link>
+            <Link href="/demo" className="btn bg-white/10 px-6 text-lg text-white">Ver la demo primero</Link>
+          </div>
         </div>
       </section>
 
       <footer className="border-t border-borde py-6 text-center text-sm text-texto-suave">
-        © {new Date().getFullYear()} Comandapp · Hecho en Colombia
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-4 gap-y-2 px-5">
+          <span>© {new Date().getFullYear()} Comandapp</span>
+          <Link href="/demo" className="underline">Demo</Link>
+          <Link href="#precio" className="underline">Precio</Link>
+          <Link href="#preguntas" className="underline">Preguntas</Link>
+          <Link href="/login" className="underline">Iniciar sesión</Link>
+          <span>Hecho en Colombia</span>
+        </div>
       </footer>
+
+      <BotonWhatsApp />
     </main>
   );
 }

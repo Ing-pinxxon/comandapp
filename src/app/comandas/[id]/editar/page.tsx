@@ -3,7 +3,7 @@ import { empleadoActual, negocioActual } from "@/lib/supabase/server";
 import { catalogoServidor, pedidoServidor } from "@/lib/catalogo-servidor";
 import { FormularioPedido } from "@/components/pedido/FormularioPedido";
 
-export const metadata = { title: "Editar pedido · Comandapp" };
+export const metadata = { title: "Editar pedido", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
 
 export default async function PaginaEditarPedido({ params }: { params: Promise<{ id: string }> }) {

@@ -3,7 +3,7 @@ import { empleadosServidor } from "@/lib/catalogo-servidor";
 import { misNegociosServidor, negocioActual, sesionActual } from "@/lib/supabase/server";
 import { ElegirEmpleado } from "@/components/login/ElegirEmpleado";
 
-export const metadata = { title: "¿Quién eres? · Comandapp" };
+export const metadata = { title: "¿Quién va a usar la tablet?", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
 
 export default async function PaginaQuien({ searchParams }: { searchParams: Promise<{ volver?: string }> }) {

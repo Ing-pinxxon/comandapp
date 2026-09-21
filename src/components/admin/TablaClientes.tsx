@@ -8,8 +8,10 @@ import { telefonoBonito, urlWhatsApp } from "@/lib/whatsapp";
 import { Aviso } from "@/components/ui/Aviso";
 import { FiltroRango } from "./FiltroRango";
 import { usePedidosRango, useRangoURL } from "./usePedidosRango";
+import { useNegocio } from "@/components/NegocioProvider";
 
 export function TablaClientes() {
+  const { negocio } = useNegocio();
   const { clave, rango, cambiar } = useRangoURL();
   const { pedidos, cargando, error } = usePedidosRango(rango);
   const clientes = useMemo(() => clientesFrecuentes(pedidos, 100), [pedidos]);
@@ -36,7 +38,7 @@ export function TablaClientes() {
           </thead>
           <tbody>
             {clientes.map((c) => {
-              const wa = urlWhatsApp(c.telefono, `¡Hola ${c.nombre.split(" ")[0]}! 👋 Te escribimos de Saboratto 🍔`);
+              const wa = urlWhatsApp(c.telefono, `¡Hola ${c.nombre.split(" ")[0]}! 👋 Te escribimos de ${negocio.nombre}`);
               return (
                 <tr key={c.telefono || c.nombre} className="border-t border-borde">
                   <td className="px-3 py-2 font-bold">{c.nombre}</td>

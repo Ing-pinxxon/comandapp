@@ -9,6 +9,7 @@ import { telefonoBonito } from "@/lib/whatsapp";
 import { Aviso } from "@/components/ui/Aviso";
 import { FiltroRango } from "./FiltroRango";
 import { usePedidosRango, useRangoURL } from "./usePedidosRango";
+import { useNegocio } from "@/components/NegocioProvider";
 
 const ESTADOS: { valor: EstadoPedido | "todos"; etiqueta: string }[] = [
   { valor: "todos", etiqueta: "Todos" },
@@ -18,6 +19,7 @@ const ESTADOS: { valor: EstadoPedido | "todos"; etiqueta: string }[] = [
 ];
 
 export function TablaPedidos() {
+  const { negocio } = useNegocio();
   const { clave, rango, cambiar } = useRangoURL();
   const { pedidos, cargando, error } = usePedidosRango(rango);
   const [busqueda, setBusqueda] = useState("");
@@ -44,7 +46,7 @@ export function TablaPedidos() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `pedidos_saboratto_${rango.desde}_${rango.hasta}.csv`;
+    a.download = `pedidos_${negocio.slug}_${rango.desde}_${rango.hasta}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   }

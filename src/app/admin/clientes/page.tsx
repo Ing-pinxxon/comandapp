@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { TablaClientes } from "@/components/admin/TablaClientes";
 
-export const metadata = { title: "Clientes · Admin Saboratto" };
+export const metadata = { title: "Clientes", robots: { index: false, follow: false } };
 
 export default function PaginaClientes() {
   return (

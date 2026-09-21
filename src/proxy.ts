@@ -2,11 +2,17 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 // Rutas que se pueden ver sin sesión
-const PUBLICAS = new Set(["/", "/registro", "/login", "/recuperar", "/auth/callback", "/auth/cambiar-clave"]);
+const PUBLICAS = new Set(["/", "/demo", "/registro", "/login", "/recuperar", "/auth/callback", "/auth/cambiar-clave"]);
+
+// Archivos que piden los buscadores y el navegador. Nunca llevan sesión: si se
+// redirigen al login, Google no puede leer el robots.txt ni el sitemap.
+const ARCHIVOS_PUBLICOS = ["/robots.txt", "/sitemap.xml", "/manifest.webmanifest", "/icon", "/apple-icon", "/opengraph-image"];
 
 // Refresca la sesión de Supabase en cada petición y protege las rutas.
 // Chequeo optimista (solo cookie/JWT). Negocio, empleado y superadmin se validan en los layouts.
 export async function proxy(request: NextRequest) {
+  if (ARCHIVOS_PUBLICOS.some((a) => request.nextUrl.pathname.startsWith(a))) return NextResponse.next({ request });
+
   let respuesta = NextResponse.next({ request });
 
   const supabase = createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
@@ -36,7 +42,9 @@ export async function proxy(request: NextRequest) {
     url.searchParams.set("volver", ruta);
     return NextResponse.redirect(url);
   }
-  if (autenticado && (ruta === "/login" || ruta === "/registro")) {
+  // Quien ya tiene sesión no ve la portada ni el registro: va directo a su cola.
+  // (La portada queda así como página estática, que es lo que Google indexa mejor.)
+  if (autenticado && (ruta === "/" || ruta === "/login" || ruta === "/registro")) {
     const url = request.nextUrl.clone();
     url.pathname = "/comandas";
     url.search = "";

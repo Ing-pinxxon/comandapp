@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { esSuperadmin, sesionActual } from "@/lib/supabase/server";
 import { PanelPlataforma } from "@/components/plataforma/PanelPlataforma";
 
-export const metadata = { title: "Plataforma · Comandapp" };
+export const metadata = { title: "Plataforma", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
 
 /** Solo para el dueño de Comandapp: todos los negocios registrados */

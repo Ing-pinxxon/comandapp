@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { misNegociosServidor, sesionActual } from "@/lib/supabase/server";
 import { AsistenteOnboarding } from "@/components/onboarding/AsistenteOnboarding";
 
-export const metadata = { title: "Configura tu negocio · Comandapp" };
+export const metadata = { title: "Configura tu negocio", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
 
 export default async function PaginaOnboarding({ searchParams }: { searchParams: Promise<{ nuevo?: string }> }) {

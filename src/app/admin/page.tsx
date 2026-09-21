@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { Dashboard } from "@/components/admin/Dashboard";
 
-export const metadata = { title: "Resumen · Admin Saboratto" };
+export const metadata = { title: "Resumen", robots: { index: false, follow: false } };
 
 export default function PaginaAdmin() {
   return (
