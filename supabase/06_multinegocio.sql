@@ -6,7 +6,7 @@
 -- Si la base ya tiene datos de Saboratto, los migra al negocio "Saboratto".
 -- =====================================================================
 
-create extension if not exists pgcrypto;
+create extension if not exists pgcrypto with schema extensions;
 
 -- ---------------------------------------------------------------------
 -- 1. Tablas nuevas
@@ -188,17 +188,17 @@ end $$;
 -- 4. Funciones de apoyo (seguridad)
 -- ---------------------------------------------------------------------
 create or replace function mis_negocios()
-returns setof uuid language sql stable security definer set search_path = public as $$
+returns setof uuid language sql stable security definer set search_path = public, extensions as $$
   select negocio_id from miembros where user_id = auth.uid();
 $$;
 
 create or replace function es_miembro(p_negocio uuid)
-returns boolean language sql stable security definer set search_path = public as $$
+returns boolean language sql stable security definer set search_path = public, extensions as $$
   select exists (select 1 from miembros where negocio_id = p_negocio and user_id = auth.uid());
 $$;
 
 create or replace function es_superadmin()
-returns boolean language sql stable security definer set search_path = public as $$
+returns boolean language sql stable security definer set search_path = public, extensions as $$
   select exists (select 1 from superadmins where user_id = auth.uid());
 $$;
 
@@ -212,7 +212,7 @@ $$;
 -- 5. Crear negocio (onboarding)
 -- ---------------------------------------------------------------------
 create or replace function crear_negocio(p_nombre text, p_slug text, p_telefono text, p_pin text, p_combo_descripcion text default null)
-returns uuid language plpgsql security definer set search_path = public as $$
+returns uuid language plpgsql security definer set search_path = public, extensions as $$
 declare
   v_uid     uuid := auth.uid();
   v_negocio uuid;
@@ -254,7 +254,7 @@ end $$;
 -- 6. Empleados y PIN
 -- ---------------------------------------------------------------------
 create or replace function crear_empleado(p_negocio uuid, p_nombre text, p_pin text, p_es_dueno boolean default false)
-returns uuid language plpgsql security definer set search_path = public as $$
+returns uuid language plpgsql security definer set search_path = public, extensions as $$
 declare v_id uuid;
 begin
   if not es_miembro(p_negocio) then raise exception 'No tienes acceso a este negocio'; end if;
@@ -267,7 +267,7 @@ begin
 end $$;
 
 create or replace function cambiar_pin(p_empleado uuid, p_pin text)
-returns void language plpgsql security definer set search_path = public as $$
+returns void language plpgsql security definer set search_path = public, extensions as $$
 declare v_negocio uuid;
 begin
   select negocio_id into v_negocio from empleados where id = p_empleado;
@@ -279,7 +279,7 @@ end $$;
 -- Devuelve el empleado si el PIN es correcto; null si no.
 create or replace function verificar_pin(p_negocio uuid, p_empleado uuid, p_pin text)
 returns table (id uuid, nombre text, es_dueno boolean)
-language plpgsql security definer set search_path = public as $$
+language plpgsql security definer set search_path = public, extensions as $$
 begin
   if not es_miembro(p_negocio) then raise exception 'No tienes acceso a este negocio'; end if;
   return query
@@ -554,7 +554,7 @@ end $$;
 -- Usada por el bot (con service_role) para saber a qué negocio pertenece su clave
 create or replace function negocio_por_clave(p_clave uuid)
 returns table (id uuid, nombre text, activo boolean)
-language sql stable security definer set search_path = public as $$
+language sql stable security definer set search_path = public, extensions as $$
   select id, nombre, activo from negocios where clave_integracion = p_clave;
 $$;
 
@@ -562,7 +562,7 @@ create or replace function resumen_plataforma()
 returns table (
   id uuid, nombre text, slug text, logo_url text, activo boolean, creado_en timestamptz,
   dueno_email text, pedidos_total bigint, pedidos_7d bigint, ultimo_pedido timestamptz, empleados bigint
-) language plpgsql stable security definer set search_path = public as $$
+) language plpgsql stable security definer set search_path = public, extensions as $$
 begin
   if not es_superadmin() then raise exception 'Solo el dueño de la plataforma'; end if;
   return query
@@ -577,7 +577,7 @@ begin
 end $$;
 
 create or replace function cambiar_estado_negocio(p_negocio uuid, p_activo boolean)
-returns void language plpgsql security definer set search_path = public as $$
+returns void language plpgsql security definer set search_path = public, extensions as $$
 begin
   if not es_superadmin() then raise exception 'Solo el dueño de la plataforma'; end if;
   update negocios set activo = p_activo where id = p_negocio;

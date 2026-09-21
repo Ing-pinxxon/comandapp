@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { ArrowLeft, Crown, LogOut, Store, UserPlus } from "lucide-react";
 import { iniciales, type Empleado, type Negocio } from "@/lib/tipos";
-import { cerrarSesion, mensajeError, verificarPin } from "@/lib/datos";
+import { cerrarSesion, crearEmpleado, mensajeError, verificarPin } from "@/lib/datos";
 import { elegirNegocio, guardarEmpleadoActual } from "@/app/acciones";
 import { TecladoNumerico } from "@/components/ui/TecladoNumerico";
 import { Aviso } from "@/components/ui/Aviso";
@@ -28,6 +28,24 @@ export function ElegirEmpleado({ negocio, negocios, empleados, volver }: Props) 
   const [error, setError] = useState<string | null>(null);
   const [verificando, setVerificando] = useState(false);
   const [pendiente, iniciar] = useTransition();
+  const [primerNombre, setPrimerNombre] = useState("Dueño");
+  const [primerPin, setPrimerPin] = useState("");
+
+  /** Negocio sin equipo (por ejemplo, migrado): el dueño crea su propio PIN aquí mismo */
+  async function crearPrimero() {
+    setVerificando(true);
+    setError(null);
+    try {
+      const id = await crearEmpleado(negocio.id, primerNombre, primerPin, true);
+      await guardarEmpleadoActual(negocio.id, { id, nombre: primerNombre.trim(), es_dueno: true });
+      router.replace(volver);
+      router.refresh();
+    } catch (e) {
+      setError(mensajeError(e));
+    } finally {
+      setVerificando(false);
+    }
+  }
 
   async function comprobar(valor: string) {
     if (!elegido) return;
@@ -94,10 +112,26 @@ export function ElegirEmpleado({ negocio, negocios, empleados, volver }: Props) 
         <>
           <p className="mb-3 text-center text-texto-suave">¿Quién va a usar la tablet?</p>
           {empleados.length === 0 ? (
-            <Aviso tipo="info">
-              Todavía no hay empleados. Crea el primero desde el panel del dueño.{" "}
-              <Link href="/admin/equipo" className="font-bold underline">Ir a Equipo</Link>
-            </Aviso>
+            <form
+              className="mx-auto max-w-sm space-y-3"
+              onSubmit={(e) => {
+                e.preventDefault();
+                void crearPrimero();
+              }}
+            >
+              <Aviso tipo="info">Todavía no hay nadie en el equipo. Crea tu PIN de dueño para empezar; luego agregas a los demás desde el panel.</Aviso>
+              <label className="block">
+                <span className="mb-1 block text-sm text-texto-suave">Tu nombre</span>
+                <input className="campo" value={primerNombre} onChange={(e) => setPrimerNombre(e.target.value)} required />
+              </label>
+              <label className="block">
+                <span className="mb-1 block text-sm text-texto-suave">PIN de dueño (4 a 6 dígitos)</span>
+                <input className="campo text-center text-2xl tracking-[0.4em]" inputMode="numeric" value={primerPin} onChange={(e) => setPrimerPin(e.target.value.replace(/\D/g, "").slice(0, 6))} required placeholder="••••" autoFocus />
+              </label>
+              <button type="submit" disabled={verificando || !primerNombre.trim() || primerPin.length < 4} className="btn w-full bg-marca text-lg text-black">
+                {verificando ? "Creando…" : "Crear mi PIN y entrar"}
+              </button>
+            </form>
           ) : (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               {empleados.map((e) => (
