@@ -99,7 +99,8 @@ export function GestionProductos() {
       nombre: p.nombre,
       precio: String(p.precio),
       precio_combo: p.precio_combo ? String(p.precio_combo) : "",
-      costo: p.costo === null ? "" : String(p.costo),
+      // == null a propósito: si la base todavía no tiene la columna, llega undefined
+      costo: p.costo == null ? "" : String(p.costo),
       ingredientes: p.ingredientes.join(", "),
       categoria_id: p.categoria_id,
     };
@@ -225,7 +226,7 @@ export function GestionProductos() {
                     <td className="pr-2 tabular-nums">
                       {b ? (
                         <input className="campo min-h-10" inputMode="numeric" value={b.costo} onChange={(e) => setEditando({ ...editando, [p.id]: { ...b, costo: e.target.value.replace(/\D/g, "") } })} placeholder="sin costo" />
-                      ) : p.costo === null ? (
+                      ) : p.costo == null ? (
                         <span className="text-texto-suave">sin costo</span>
                       ) : (
                         <>
