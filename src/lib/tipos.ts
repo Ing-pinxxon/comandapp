@@ -210,6 +210,12 @@ export interface PedidoEntrada {
   notas: string;
 }
 
+/**
+ * Los que se ofrecen al tomar un pedido. Los demás siguen existiendo en la base
+ * y en METODOS_PAGO: los pedidos viejos y el panel tienen que poder nombrarlos.
+ */
+export const METODOS_PAGO_OFRECIDOS: MetodoPago[] = ["efectivo", "breb"];
+
 export const METODOS_PAGO: { valor: MetodoPago; etiqueta: string }[] = [
   { valor: "efectivo", etiqueta: "Efectivo" },
   { valor: "nequi", etiqueta: "Nequi" },

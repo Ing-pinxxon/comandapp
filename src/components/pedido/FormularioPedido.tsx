@@ -6,7 +6,7 @@ import { Fragment, useMemo, useState } from "react";
 import { ArrowLeft, Bike, ClipboardList, Phone, Save, Search, ShoppingBag, Sparkles, Store, Trash2, UserRound, UtensilsCrossed, X } from "lucide-react";
 import type { Catalogo } from "@/lib/catalogo";
 import { guardarPedido, mensajeError } from "@/lib/datos";
-import { METODOS_PAGO, type Categoria, type MetodoPago, type PedidoConItems, type Producto } from "@/lib/tipos";
+import { METODOS_PAGO, METODOS_PAGO_OFRECIDOS, type Categoria, type MetodoPago, type PedidoConItems, type Producto } from "@/lib/tipos";
 import { calcularTotales } from "@/lib/precios";
 import { formatoCOP } from "@/lib/fechas";
 import { Aviso } from "@/components/ui/Aviso";
@@ -81,6 +81,15 @@ export function FormularioPedido({ catalogo, pedidoExistente, demo = false, onCe
   const unidades = items.reduce((s, i) => s + i.cantidad, 0);
   // El aviso vive junto al botón de guardar, lejos del campo: se marca también aquí
   const faltaNombre = Boolean(error) && !nombre.trim();
+
+  // Un pedido viejo puede venir con un método que ya no se ofrece (Nequi,
+  // Daviplata): se muestra igual, para verlo y no cambiarlo sin querer.
+  const metodosVisibles = useMemo(() => {
+    const ofrecidos = METODOS_PAGO.filter((m) => METODOS_PAGO_OFRECIDOS.includes(m.valor));
+    if (ofrecidos.some((m) => m.valor === metodo)) return ofrecidos;
+    const actual = METODOS_PAGO.find((m) => m.valor === metodo);
+    return actual ? [...ofrecidos, actual] : ofrecidos;
+  }, [metodo]);
 
   function agregarProducto(p: Producto, cat: Categoria) {
     if (p.agotado) return;
@@ -333,14 +342,13 @@ export function FormularioPedido({ catalogo, pedidoExistente, demo = false, onCe
             <div className="flex flex-wrap items-end gap-x-6 gap-y-2">
               <div>
                 <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-texto-suave">Método de pago</span>
-                {/* En celular se deslizan de lado en vez de gastar dos filas */}
-                <div className="scroll-fino flex gap-1.5 overflow-x-auto pb-0.5 sm:flex-wrap sm:overflow-x-visible">
-                  {METODOS_PAGO.map((m) => (
+                <div className="flex flex-wrap gap-1.5">
+                  {metodosVisibles.map((m) => (
                     <button
                       key={m.valor}
                       type="button"
                       onClick={() => setMetodo(m.valor)}
-                      className={`btn min-h-10 shrink-0 px-3 text-sm ${metodo === m.valor ? "bg-marca text-black" : "bg-panel"}`}
+                      className={`btn min-h-10 shrink-0 px-5 ${metodo === m.valor ? "bg-marca text-black" : "bg-panel"}`}
                     >
                       {m.etiqueta}
                     </button>
