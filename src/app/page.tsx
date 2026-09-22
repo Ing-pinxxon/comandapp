@@ -233,6 +233,8 @@ export default function Inicio() {
           <Link href="#precio" className="underline">Precio</Link>
           <Link href="#preguntas" className="underline">Preguntas</Link>
           <Link href="/login" className="underline">Iniciar sesión</Link>
+          <Link href="/privacidad" className="underline">Privacidad</Link>
+          <Link href="/terminos" className="underline">Términos</Link>
           <a href={urlWhatsAppVentas()} target="_blank" rel="noopener noreferrer" className="underline">
             WhatsApp {WHATSAPP_VENTAS_BONITO}
           </a>
