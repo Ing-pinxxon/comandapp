@@ -27,6 +27,9 @@ export const metadata: Metadata = {
     description: DESCRIPCION_SITIO,
   },
   robots: { index: true, follow: true },
+  // Le prueba a Search Console que el sitio es nuestro. El código es público a
+  // propósito: va en el HTML de todas las páginas, no es un secreto.
+  verification: { google: "eAgMIDN5Tz2GUEViyIHoP6q0YLjDrOU58MlLkVcKfB0" },
   category: "business",
 };
 
