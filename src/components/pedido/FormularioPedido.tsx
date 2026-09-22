@@ -33,11 +33,7 @@ interface Props {
 const nombreCorto = (nombre: string) => nombre.replace(/^(Hamburguesa|Perro Caliente|Salchipapa)\s+/i, "");
 
 /** Para buscar sin que estorben las tildes ni las mayúsculas */
-const sinTildes = (s: string) =>
-  s
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .toLowerCase();
+const sinTildes = (s: string) => s.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
 
 export function FormularioPedido({ catalogo, pedidoExistente, demo = false, onCerrar, onGuardado, empleadoId = null }: Props) {
   const router = useRouter();
@@ -83,6 +79,8 @@ export function FormularioPedido({ catalogo, pedidoExistente, demo = false, onCe
     [items, cargos, categorias, config, esDomicilio],
   );
   const unidades = items.reduce((s, i) => s + i.cantidad, 0);
+  // El aviso vive junto al botón de guardar, lejos del campo: se marca también aquí
+  const faltaNombre = Boolean(error) && !nombre.trim();
 
   function agregarProducto(p: Producto, cat: Categoria) {
     if (p.agotado) return;
@@ -185,10 +183,17 @@ export function FormularioPedido({ catalogo, pedidoExistente, demo = false, onCe
           </button>
         </div>
 
+        {/* Quién pide: es el dato que más se escribe, así que va grande */}
         <div className="order-last flex w-full items-center gap-2 lg:order-none lg:ml-auto lg:w-auto">
-          <Campo icono={<UserRound className="size-5 shrink-0 text-texto-dim" />} ancho="lg:w-64">
+          {/* El tamaño va en la caja, no en el input: globals.css tiene un
+              `input { font: inherit }` sin capa que gana sobre text-lg */}
+          <Campo
+            icono={<UserRound className="size-6 shrink-0 text-texto-suave" />}
+            ancho="lg:w-80 xl:w-96"
+            className={`font-bold sm:text-lg ${faltaNombre ? "border-peligro bg-peligro/5" : ""}`}
+          >
             <input
-              className="min-h-11 w-full bg-transparent text-base outline-none placeholder:text-texto-dim"
+              className="min-h-12 w-full bg-transparent outline-none placeholder:font-normal placeholder:text-texto-dim"
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
               placeholder="Nombre del cliente *"
@@ -196,9 +201,9 @@ export function FormularioPedido({ catalogo, pedidoExistente, demo = false, onCe
               autoFocus={!editando}
             />
           </Campo>
-          <Campo icono={<Phone className="size-5 shrink-0 text-texto-dim" />} ancho="lg:w-52">
+          <Campo icono={<Phone className="size-6 shrink-0 text-texto-suave" />} ancho="lg:w-60 xl:w-64" className="sm:text-lg">
             <input
-              className="min-h-11 w-full bg-transparent text-base tabular-nums outline-none placeholder:text-texto-dim"
+              className="min-h-12 w-full bg-transparent tabular-nums outline-none placeholder:text-texto-dim"
               inputMode="numeric"
               type="tel"
               value={telefono}
@@ -305,7 +310,7 @@ export function FormularioPedido({ catalogo, pedidoExistente, demo = false, onCe
             {items.length === 0 ? (
               <p className="rounded-xl border border-dashed border-borde p-6 text-center text-texto-suave">Toca los productos del menú para agregarlos.</p>
             ) : (
-              <ul className="space-y-2">
+              <ul className="space-y-3">
                 {items.map((it) => (
                   <ItemPedido
                     key={it.clave}
@@ -415,7 +420,7 @@ export function FormularioPedido({ catalogo, pedidoExistente, demo = false, onCe
 function Campo({ icono, children, ancho = "", className = "" }: { icono?: React.ReactNode; children: React.ReactNode; ancho?: string; className?: string }) {
   return (
     <label
-      className={`flex min-w-0 flex-1 items-center gap-2 rounded-2xl border border-borde bg-panel px-3 focus-within:border-marca focus-within:shadow-[0_0_0_3px_rgba(217,168,51,0.25)] ${ancho} ${ancho ? "lg:flex-none" : ""} ${className}`}
+      className={`flex min-w-0 flex-1 items-center gap-2 rounded-2xl border-2 border-borde bg-panel px-3 focus-within:border-marca focus-within:shadow-[0_0_0_3px_rgba(217,168,51,0.25)] ${ancho} ${ancho ? "lg:flex-none" : ""} ${className}`}
     >
       {icono}
       {children}

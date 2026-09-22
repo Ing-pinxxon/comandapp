@@ -28,6 +28,8 @@ export function ItemPedido({ item, config, abierto, destacado = false, onAlterna
   const pu = precioUnitarioBorrador(item, config);
   const quitados = item.exclusiones.length;
   const personalizable = item.ingredientes.length > 0 || item.permite_combo || item.nota;
+  // Un solo borde manda: abierto es mostaza, con algo quitado es rojo, si no gris
+  const borde = abierto ? "border-marca shadow-[0_10px_28px_-14px_rgba(20,20,20,0.45)]" : quitados > 0 ? "border-peligro/50" : "border-borde";
 
   // Con la lista larga, el producto que acabas de tocar puede quedar fuera de
   // pantalla: se sube solo lo justo para verlo.
@@ -45,10 +47,14 @@ export function ItemPedido({ item, config, abierto, destacado = false, onAlterna
   return (
     <li
       ref={fila}
-      className={`tarjeta overflow-hidden transition-shadow ${quitados > 0 ? "border-peligro/40" : ""} ${destacado ? "ring-2 ring-marca" : ""}`}
+      className={`overflow-hidden rounded-2xl border-2 bg-panel shadow-[0_1px_2px_rgba(20,20,20,0.04)] transition ${borde} ${
+        destacado ? "ring-2 ring-marca ring-offset-2 ring-offset-fondo" : ""
+      }`}
     >
-      {/* Una sola línea: nombre, cantidad, total y los dos botones */}
-      <div className="flex items-center gap-2 px-3 py-2">
+      {/* Una sola línea: nombre, cantidad, total y los dos botones.
+          Abierto se tiñe de mostaza: así se ve de un vistazo dónde empieza el
+          producto que se está editando y dónde termina. */}
+      <div className={`flex items-center gap-2 px-3 py-2 ${abierto ? "bg-marca/20" : ""}`}>
         <div className="min-w-0 flex-1">
           {/* En celular el nombre se parte en dos líneas; en tablet cabe en una */}
           <div className="line-clamp-2 text-base font-extrabold leading-tight sm:truncate">
@@ -102,7 +108,7 @@ export function ItemPedido({ item, config, abierto, destacado = false, onAlterna
 
       {/* Panel de personalización */}
       {abierto && (
-        <div className="space-y-3 border-t border-borde bg-panel-2 p-3">
+        <div className="space-y-3 border-t-2 border-marca/50 bg-panel-2 p-3">
           {item.permite_combo && (
             <div className="grid grid-cols-2 gap-2">
               <button type="button" onClick={() => onCambiar({ ...item, es_combo: false })} className={`btn ${!item.es_combo ? "bg-marca text-black" : "bg-panel"}`}>
