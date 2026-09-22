@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { ArrowRight, BarChart3, Camera, Check, Clock, MessageCircle, PlayCircle, Smartphone, UsersRound } from "lucide-react";
-import { DESCRIPCION_SITIO, PALABRAS_CLAVE, TITULO_SITIO, sitioUrl } from "@/lib/sitio";
+import { DESCRIPCION_SITIO, PALABRAS_CLAVE, PERFIL_AUTOR, TITULO_SITIO, WHATSAPP_VENTAS, WHATSAPP_VENTAS_BONITO, sitioUrl, urlWhatsAppVentas } from "@/lib/sitio";
 import { INCLUYE_PLAN, PREGUNTAS } from "@/components/landing/contenido";
 import { BotonWhatsApp } from "@/components/landing/BotonWhatsApp";
+import { SelloPinzon } from "@/components/landing/SelloPinzon";
 import { Logotipo } from "@/components/ui/Logotipo";
 
 export const metadata = {
@@ -42,6 +43,15 @@ export default function Inicio() {
         description: DESCRIPCION_SITIO,
         inLanguage: "es",
         offers: { "@type": "Offer", price: "0", priceCurrency: "COP", description: "Gratis durante el lanzamiento" },
+        author: { "@type": "Person", name: "Inge Pinzón", url: PERFIL_AUTOR },
+        // El teléfono aquí es lo que puede aparecer como contacto en los resultados
+        provider: {
+          "@type": "Person",
+          name: "Inge Pinzón",
+          telephone: `+${WHATSAPP_VENTAS}`,
+          url: PERFIL_AUTOR,
+          contactPoint: { "@type": "ContactPoint", contactType: "ventas", telephone: `+${WHATSAPP_VENTAS}`, areaServed: "CO", availableLanguage: "es" },
+        },
       },
       {
         "@type": "FAQPage",
@@ -223,7 +233,13 @@ export default function Inicio() {
           <Link href="#precio" className="underline">Precio</Link>
           <Link href="#preguntas" className="underline">Preguntas</Link>
           <Link href="/login" className="underline">Iniciar sesión</Link>
+          <a href={urlWhatsAppVentas()} target="_blank" rel="noopener noreferrer" className="underline">
+            WhatsApp {WHATSAPP_VENTAS_BONITO}
+          </a>
           <span>Hecho en Colombia</span>
+        </div>
+        <div className="mt-3">
+          <SelloPinzon site="comandapp" className="[--sello-color-hover:var(--color-marca-oscuro)]" />
         </div>
       </footer>
 

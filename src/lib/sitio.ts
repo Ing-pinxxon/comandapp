@@ -11,8 +11,14 @@ export function sitioUrl(): string {
   return "http://localhost:3000";
 }
 
-/** WhatsApp de ventas de Comandapp (no el de un negocio cliente) */
-export const WHATSAPP_VENTAS = "573222430079";
+/** WhatsApp de contacto de Comandapp: el personal de Daniel, no el de un negocio cliente */
+export const WHATSAPP_VENTAS = "573147167595";
+
+/** El mismo número, escrito como lo lee la gente */
+export const WHATSAPP_VENTAS_BONITO = "+57 314 716 7595";
+
+/** Quién hizo Comandapp; alimenta el sello del pie y los datos estructurados */
+export const PERFIL_AUTOR = "https://www.linkedin.com/in/daniel-pinzon-976751250";
 
 export const MENSAJE_VENTAS = "¡Hola! Vi Comandapp y quiero saber más para mi negocio.";
 

@@ -1,0 +1,128 @@
+/* ==========================================================================
+   Sello de autoría — Inge Pinzón
+   Copiado de github.com/Ing-pinxxon/sello (sello.css). Si allá cambia, se
+   vuelve a copiar: aquí no se edita el diseño del sello.
+
+   Por defecto hereda el color del texto que lo rodea (currentColor), así que
+   funciona igual sobre fondo claro que oscuro sin configurar nada.
+   ========================================================================== */
+
+.sello-pinzon {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sello-gap, 8px);
+
+  /* currentColor de fallback: sin configurar nada, el sello toma el color del
+     texto del contenedor. El SVG usa fill="currentColor", así que lo sigue. */
+  color: var(--sello-color, currentColor);
+  text-decoration: none;
+
+  font-size: var(--sello-size, 13px);
+  line-height: 1.2;
+  /* Sin font-family a propósito: hereda la del sitio anfitrión. */
+
+  /* En reposo va atenuado para no competir con el contenido del pie. */
+  opacity: var(--sello-opacity, 0.65);
+  transition: opacity 0.2s ease, color 0.2s ease;
+
+  /* Sin margin: el espaciado lo decide el sitio, no el componente. */
+}
+
+.sello-pinzon:hover,
+.sello-pinzon:focus-visible {
+  opacity: var(--sello-opacity-hover, 1);
+  color: var(--sello-color-hover, var(--sello-color, currentColor));
+}
+
+.sello-pinzon strong {
+  font-weight: 600;
+}
+
+.sello-pinzon svg {
+  flex: none;
+  display: block;
+
+  /* El giro va sobre el centro de masa del cuerpo, no del bounding box: la cola
+     larga desplaza el centro geométrico hacia atrás y el pico barrería de más. */
+  transform-origin: 45% 45%;
+  transition: transform 0.22s cubic-bezier(0.34, 1.25, 0.64, 1);
+}
+
+/* Al pasar el cursor, el pájaro levanta el pico y se adelanta en su dirección de
+   vuelo: a punto de despegar. -5deg es antihorario, que en un pájaro mirando a la
+   izquierda sube el pico. */
+.sello-pinzon:hover svg,
+.sello-pinzon:focus-visible svg {
+  transform: translate3d(-2px, -1.5px, 0) rotate(-5deg);
+}
+
+/* --------------------------------------------------------------------------
+   Entrada del pájaro
+
+   Se anima el hijo .sello-bird y NO el enlace. La opacidad del hijo se multiplica
+   por la del padre, así que 0 -> 1 aquí se ve como 0 -> 0.65 en pantalla, y el
+   reposo y el hover del enlace quedan intactos sin repetir ese valor en ningún
+   keyframe.
+
+   El transform de entrada vive en el wrapper y el de hover en el <svg>: si ambos
+   estuvieran en el mismo elemento, el `fill: both` de la animación fijaría el
+   transform computado y bloquearía la transición del hover para siempre.
+
+   El estado oculto depende de .is-armed, que solo añade el JS. Si el script no
+   llega a ejecutarse, el sello se ve normal.
+   -------------------------------------------------------------------------- */
+
+.sello-bird {
+  flex: none;
+  display: flex;
+  transform-origin: 45% 45%;
+}
+
+.sello-pinzon.is-armed .sello-bird {
+  opacity: 0;
+}
+
+/* El delay es corto porque el disparo ya espera a que el scroll se detenga. */
+.sello-pinzon.is-in .sello-bird {
+  animation: selloBirdIn 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.05s both;
+}
+
+@keyframes selloBirdIn {
+  from {
+    opacity: 0;
+    /* Llega desde arriba a la derecha, picado, y nivela al posarse. El pico
+       mira a la izquierda, así que vuela hacia donde mira.
+
+       El recorrido es amplio a propósito: con 18px el gesto era imperceptible
+       en un glifo de 19x16px. Lo que lo hace legible es la distancia y la
+       duración, no un rebote — y un rebote, en un pie de página, se lee como
+       barato. */
+    transform: translate3d(30px, -14px, 0) rotate(12deg) scale(0.8);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Cinturón por si el JS llegara a armar el sello igualmente. Se repiten los
+   selectores CON .is-armed / .is-in para igualar especificidad, sin !important.
+   El color del hover se conserva: reducir movimiento no es quitar feedback. */
+@media (prefers-reduced-motion: reduce) {
+  .sello-pinzon.is-armed .sello-bird,
+  .sello-pinzon.is-in .sello-bird {
+    opacity: 1;
+    transform: none;
+    animation: none;
+  }
+
+  .sello-pinzon svg {
+    transition: none;
+  }
+
+  .sello-pinzon:hover svg,
+  .sello-pinzon:focus-visible svg {
+    transform: none;
+  }
+}
