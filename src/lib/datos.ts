@@ -11,6 +11,7 @@ import {
   type Categoria,
   type Empleado,
   type EstadoPedido,
+  type EventoPedido,
   type ImportacionMenu,
   type MenuImportado,
   type Negocio,
@@ -191,6 +192,21 @@ export async function cargarPedidosRango(negocioId: string, rango: Rango): Promi
     .limit(5000);
   if (error) throw error;
   return ordenarItems(data as PedidoConItems[]);
+}
+
+/**
+ * Historial de un pedido: cuándo se creó, cada edición con cómo estaba antes,
+ * y cuándo se entregó o canceló. Es lo que se mira cuando un cliente reclama.
+ */
+export async function cargarHistorialPedido(negocioId: string, pedidoId: number): Promise<EventoPedido[]> {
+  const { data, error } = await supabaseNavegador()
+    .from("pedido_eventos")
+    .select("id, pedido_id, tipo, datos, creado_en")
+    .eq("negocio_id", negocioId)
+    .eq("pedido_id", pedidoId)
+    .order("creado_en", { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as EventoPedido[];
 }
 
 function ordenarItems(pedidos: PedidoConItems[]): PedidoConItems[] {

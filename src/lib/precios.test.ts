@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { calcularTotales, precioUnitario } from "./precios";
 import { CONFIG_DEFAULT, iniciales } from "./tipos";
+import { armarConfig } from "./catalogo";
 import { nivelSemaforo } from "./semaforo";
 import { normalizarTelefono, plantillaMensaje, telefonoBonito, urlWhatsApp } from "./whatsapp";
 import { fechaISOBogota, minutosEntre, rangoPredefinido, sumarDias } from "./fechas";
@@ -152,5 +153,32 @@ describe("iniciales", () => {
     expect(iniciales("Saboratto")).toBe("SA");
     expect(iniciales("La Casa del Perro")).toBe("LC");
     expect(iniciales("  ")).toBe("?");
+  });
+});
+
+describe("configuración del negocio", () => {
+  it("toma los métodos de pago que guardó el negocio", () => {
+    const cfg = armarConfig([{ clave: "metodos_pago", valor: ["efectivo", "nequi"] }]);
+    expect(cfg.metodos_pago).toEqual(["efectivo", "nequi"]);
+  });
+
+  it("sin fila guardada deja efectivo y Bre-B", () => {
+    expect(armarConfig([]).metodos_pago).toEqual(["efectivo", "breb"]);
+  });
+
+  it("ignora valores inventados y nunca se queda sin métodos", () => {
+    expect(armarConfig([{ clave: "metodos_pago", valor: ["efectivo", "bitcoin"] }]).metodos_pago).toEqual(["efectivo"]);
+    expect(armarConfig([{ clave: "metodos_pago", valor: [] }]).metodos_pago).toEqual(["efectivo", "breb"]);
+    expect(armarConfig([{ clave: "metodos_pago", valor: "efectivo" }]).metodos_pago).toEqual(["efectivo", "breb"]);
+  });
+
+  it("no pisa el resto de la configuración", () => {
+    const cfg = armarConfig([
+      { clave: "extra_combo", valor: 7000 },
+      { clave: "metodos_pago", valor: ["breb"] },
+    ]);
+    expect(cfg.extra_combo).toBe(7000);
+    expect(cfg.metodos_pago).toEqual(["breb"]);
+    expect(cfg.umbrales_min).toEqual(CONFIG_DEFAULT.umbrales_min);
   });
 });

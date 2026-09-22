@@ -99,11 +99,16 @@ export interface Configuracion {
   umbrales_min: Umbrales;
   extra_combo: number;
   mensajes_whatsapp: MensajesWhatsApp;
+  /** Los que el negocio acepta y aparecen al tomar un pedido */
+  metodos_pago: MetodoPago[];
 }
 
 export const CONFIG_DEFAULT: Configuracion = {
   umbrales_min: { verde: 15, amarillo: 25 },
   extra_combo: 6000,
+  // Lo habitual hoy en Colombia: las transferencias entran por Bre-B. El negocio
+  // enciende Nequi, Daviplata u Otro desde Configuración si los usa.
+  metodos_pago: ["efectivo", "breb"],
   mensajes_whatsapp: {
     listo: "¡Hola {nombre}! 👋 Tu pedido #{numero} ya está listo ✅",
     en_camino: "¡Hola {nombre}! 👋 Tu pedido #{numero} va en camino 🛵 Total: {total}",
@@ -192,6 +197,25 @@ export interface Pedido {
   tomado_por: string | null;
 }
 
+// ---------- Historial de un pedido ----------
+
+export type TipoEvento = "creado" | "editado" | "entregado" | "cancelado" | "aprobado";
+
+/** Cómo estaba el pedido antes de una edición (lo guarda guardar_pedido) */
+export interface PedidoAnterior {
+  pedido: Partial<Pedido>;
+  items: PedidoItem[];
+}
+
+export interface EventoPedido {
+  id: number;
+  pedido_id: number;
+  tipo: TipoEvento;
+  /** En las ediciones trae `{ anterior }`; en las cancelaciones, el motivo */
+  datos: { anterior?: PedidoAnterior; motivo?: string } | null;
+  creado_en: string;
+}
+
 export interface PedidoConItems extends Pedido {
   pedido_items: PedidoItem[];
   /** Nombre del empleado que lo tomó (join opcional) */
@@ -211,11 +235,10 @@ export interface PedidoEntrada {
 }
 
 /**
- * Los que se ofrecen al tomar un pedido. Los demás siguen existiendo en la base
- * y en METODOS_PAGO: los pedidos viejos y el panel tienen que poder nombrarlos.
+ * Todos los que existen. Cuáles se ofrecen al tomar un pedido lo decide cada
+ * negocio (`Configuracion.metodos_pago`); esta lista se queda completa porque
+ * los pedidos viejos y el panel tienen que poder nombrarlos igual.
  */
-export const METODOS_PAGO_OFRECIDOS: MetodoPago[] = ["efectivo", "breb"];
-
 export const METODOS_PAGO: { valor: MetodoPago; etiqueta: string }[] = [
   { valor: "efectivo", etiqueta: "Efectivo" },
   { valor: "nequi", etiqueta: "Nequi" },

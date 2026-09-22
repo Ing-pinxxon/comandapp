@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { ChevronDown, ChevronUp, Download, Search } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { ChevronDown, ChevronUp, Download, History, Search } from "lucide-react";
 import { filasCSV } from "@/lib/analitica";
+import { cargarHistorialPedido, mensajeError } from "@/lib/datos";
 import { fechaCorta, formatoCOP, hora12, minutosEntre } from "@/lib/fechas";
-import { etiquetaMetodoPago, type EstadoPedido } from "@/lib/tipos";
+import { etiquetaMetodoPago, type EstadoPedido, type EventoPedido, type PedidoConItems } from "@/lib/tipos";
 import { telefonoBonito } from "@/lib/whatsapp";
 import { Aviso } from "@/components/ui/Aviso";
 import { FiltroRango } from "./FiltroRango";
@@ -126,10 +127,11 @@ export function TablaPedidos() {
                           ))}
                           <span>{p.es_domicilio ? "Domicilio" : "Recoge"}</span>
                           {p.empleados?.nombre && <span>Tomó: {p.empleados.nombre}</span>}
+                          {p.origen === "whatsapp" && <span>Llegó por WhatsApp</span>}
                           {p.notas && <span>📝 {p.notas}</span>}
                           {p.motivo_cancelacion && <span className="text-peligro">Motivo: {p.motivo_cancelacion}</span>}
-                          {p.editado_en && <span>Editado {hora12(p.editado_en)}</span>}
                         </div>
+                        <HistorialPedido negocioId={negocio.id} pedido={p} />
                       </td>
                     </tr>
                   )}
@@ -160,6 +162,83 @@ function FilaPedido({ children, expandido, onToggle }: { children: React.ReactNo
     </>
   );
 }
+
+/**
+ * Qué le pasó al pedido desde que se tomó. Se carga solo al desplegar la fila:
+ * es una consulta por pedido y casi nunca se necesita.
+ *
+ * En cada edición se guarda cómo estaba antes, que es justo lo que hay que
+ * mirar cuando un cliente reclama que pidió algo distinto.
+ */
+function HistorialPedido({ negocioId, pedido }: { negocioId: string; pedido: PedidoConItems }) {
+  const [eventos, setEventos] = useState<EventoPedido[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let vigente = true;
+    cargarHistorialPedido(negocioId, pedido.id)
+      .then((e) => vigente && setEventos(e))
+      .catch((e) => vigente && setError(mensajeError(e)));
+    return () => {
+      vigente = false;
+    };
+  }, [negocioId, pedido.id]);
+
+  if (error) return <p className="mt-3 text-xs text-peligro">No se pudo cargar el historial: {error}</p>;
+  if (!eventos) return <p className="mt-3 text-xs text-texto-suave">Cargando historial…</p>;
+  if (eventos.length === 0) return null;
+
+  return (
+    <div className="mt-3 border-t border-borde pt-2">
+      <h4 className="mb-1 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-texto-suave">
+        <History className="size-4" /> Historial del pedido
+      </h4>
+      <ol className="space-y-1.5">
+        {eventos.map((ev) => {
+          const anterior = ev.datos?.anterior;
+          return (
+            <li key={ev.id} className="text-xs">
+              <span className="font-bold">{ETIQUETA_EVENTO[ev.tipo] ?? ev.tipo}</span>{" "}
+              <span className="tabular-nums text-texto-suave">
+                {fechaCorta(ev.creado_en)} {hora12(ev.creado_en)}
+              </span>
+              {ev.datos?.motivo && <span className="text-peligro"> · {ev.datos.motivo}</span>}
+              {anterior && (
+                <div className="mt-0.5 rounded-lg border border-borde bg-panel px-2 py-1 text-texto-suave">
+                  <span className="font-bold">Antes de esta edición:</span>{" "}
+                  {(anterior.items ?? []).length === 0 ? (
+                    "sin productos"
+                  ) : (
+                    <>
+                      {anterior.items.map((i, k) => (
+                        <span key={k}>
+                          {k > 0 && " · "}
+                          {i.cantidad}× {i.nombre}
+                          {i.es_combo && " (Combo)"}
+                          {i.exclusiones?.length > 0 && <span className="text-peligro"> sin {i.exclusiones.join(", ")}</span>}
+                          {i.nota && <span className="text-marca-oscuro"> 📝 {i.nota}</span>}
+                        </span>
+                      ))}
+                      {typeof anterior.pedido?.total === "number" && <span> · Total {formatoCOP(anterior.pedido.total)}</span>}
+                    </>
+                  )}
+                </div>
+              )}
+            </li>
+          );
+        })}
+      </ol>
+    </div>
+  );
+}
+
+const ETIQUETA_EVENTO: Record<string, string> = {
+  creado: "Tomado",
+  editado: "Editado",
+  entregado: "Entregado",
+  cancelado: "Cancelado",
+  aprobado: "Aprobado (venía del bot)",
+};
 
 function Estado({ estado }: { estado: EstadoPedido }) {
   const estilos: Record<EstadoPedido, string> = {

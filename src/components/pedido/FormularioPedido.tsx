@@ -6,7 +6,7 @@ import { Fragment, useMemo, useState } from "react";
 import { ArrowLeft, Bike, ClipboardList, Phone, Save, Search, ShoppingBag, Sparkles, Store, Trash2, UserRound, UtensilsCrossed, X } from "lucide-react";
 import type { Catalogo } from "@/lib/catalogo";
 import { guardarPedido, mensajeError } from "@/lib/datos";
-import { METODOS_PAGO, METODOS_PAGO_OFRECIDOS, type Categoria, type MetodoPago, type PedidoConItems, type Producto } from "@/lib/tipos";
+import { METODOS_PAGO, type Categoria, type MetodoPago, type PedidoConItems, type Producto } from "@/lib/tipos";
 import { calcularTotales } from "@/lib/precios";
 import { formatoCOP } from "@/lib/fechas";
 import { Aviso } from "@/components/ui/Aviso";
@@ -45,7 +45,8 @@ export function FormularioPedido({ catalogo, pedidoExistente, demo = false, onCe
 
   const [nombre, setNombre] = useState(pedidoExistente?.cliente_nombre ?? "");
   const [telefono, setTelefono] = useState(pedidoExistente?.cliente_telefono ?? "");
-  const [metodo, setMetodo] = useState<MetodoPago>(pedidoExistente?.metodo_pago ?? "efectivo");
+  // Sin pedido previo arranca en el primero que acepte el negocio
+  const [metodo, setMetodo] = useState<MetodoPago>(pedidoExistente?.metodo_pago ?? config.metodos_pago[0] ?? "efectivo");
   const [esDomicilio, setEsDomicilio] = useState(pedidoExistente?.es_domicilio ?? true);
   const [notas, setNotas] = useState(pedidoExistente?.notas ?? "");
   const [items, setItems] = useState<ItemBorrador[]>(() => (pedidoExistente ? borradoresDesdePedido(pedidoExistente, productos, categorias, config) : []));
@@ -82,14 +83,14 @@ export function FormularioPedido({ catalogo, pedidoExistente, demo = false, onCe
   // El aviso vive junto al botón de guardar, lejos del campo: se marca también aquí
   const faltaNombre = Boolean(error) && !nombre.trim();
 
-  // Un pedido viejo puede venir con un método que ya no se ofrece (Nequi,
-  // Daviplata): se muestra igual, para verlo y no cambiarlo sin querer.
+  // Los que acepta el negocio. Un pedido viejo puede venir con uno que ya no se
+  // ofrece: se muestra igual, para verlo y no cambiarlo sin querer.
   const metodosVisibles = useMemo(() => {
-    const ofrecidos = METODOS_PAGO.filter((m) => METODOS_PAGO_OFRECIDOS.includes(m.valor));
+    const ofrecidos = METODOS_PAGO.filter((m) => config.metodos_pago.includes(m.valor));
     if (ofrecidos.some((m) => m.valor === metodo)) return ofrecidos;
     const actual = METODOS_PAGO.find((m) => m.valor === metodo);
     return actual ? [...ofrecidos, actual] : ofrecidos;
-  }, [metodo]);
+  }, [metodo, config.metodos_pago]);
 
   function agregarProducto(p: Producto, cat: Categoria) {
     if (p.agotado) return;

@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Save, SlidersHorizontal } from "lucide-react";
+import { Check, Plus, Save, SlidersHorizontal } from "lucide-react";
 import { supabaseNavegador } from "@/lib/supabase/client";
 import { cargarCatalogo, mensajeError } from "@/lib/datos";
-import type { Configuracion } from "@/lib/tipos";
+import { METODOS_PAGO, type Configuracion } from "@/lib/tipos";
 import { Aviso } from "@/components/ui/Aviso";
 import { useNegocio } from "@/components/NegocioProvider";
 
@@ -28,10 +28,15 @@ export function FormConfiguracion() {
     }
     setGuardando(true);
     setError(null);
+    if (cfg.metodos_pago.length === 0) {
+      setError("Deja al menos un método de pago: sin ninguno no se puede cobrar un pedido.");
+      return;
+    }
     const filas = [
       { clave: "umbrales_min", valor: cfg.umbrales_min },
       { clave: "extra_combo", valor: cfg.extra_combo },
       { clave: "mensajes_whatsapp", valor: cfg.mensajes_whatsapp },
+      { clave: "metodos_pago", valor: cfg.metodos_pago },
     ].map((f) => ({ ...f, negocio_id: negocio.id, actualizado_en: new Date().toISOString() }));
     const { error } = await supabaseNavegador().from("configuracion").upsert(filas, { onConflict: "negocio_id,clave" });
     setGuardando(false);
@@ -86,6 +91,36 @@ export function FormConfiguracion() {
             <SlidersHorizontal className="size-4" /> Cargos
           </Link>
           . No se aplican descuentos.
+        </p>
+      </section>
+
+      <section className="tarjeta space-y-3 p-4">
+        <h2 className="text-lg font-extrabold">Métodos de pago</h2>
+        <p className="text-sm text-texto-suave">Solo los que enciendas aquí aparecen al tomar un pedido. Toca para prender o apagar.</p>
+        <div className="flex flex-wrap gap-2">
+          {METODOS_PAGO.map((m) => {
+            const activo = cfg.metodos_pago.includes(m.valor);
+            return (
+              <button
+                key={m.valor}
+                type="button"
+                aria-pressed={activo}
+                onClick={() =>
+                  setCfg({
+                    ...cfg,
+                    metodos_pago: activo ? cfg.metodos_pago.filter((v) => v !== m.valor) : [...cfg.metodos_pago, m.valor],
+                  })
+                }
+                className={`btn px-5 ${activo ? "bg-marca text-black" : "bg-panel-2 text-texto-suave"}`}
+              >
+                {activo ? <Check className="size-5" /> : <Plus className="size-5" />} {m.etiqueta}
+              </button>
+            );
+          })}
+        </div>
+        <p className="text-sm text-texto-suave">
+          Apagar uno no borra nada: los pedidos que ya se cobraron así siguen apareciendo con su método en el panel y en el CSV. Si editas uno viejo, su botón
+          vuelve a salir para que no se lo cambies sin querer.
         </p>
       </section>
 

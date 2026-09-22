@@ -2,7 +2,7 @@
 // Este archivo NO lleva "use client": lo usan tanto los Server Components
 // (lib/catalogo-servidor.ts) como los componentes del navegador (lib/datos.ts).
 
-import { CONFIG_DEFAULT, type Cargo, type Categoria, type Configuracion, type Negocio, type Producto } from "./tipos";
+import { CONFIG_DEFAULT, METODOS_PAGO, type Cargo, type Categoria, type Configuracion, type MetodoPago, type Negocio, type Producto } from "./tipos";
 
 export interface Catalogo {
   negocio: Negocio;
@@ -28,6 +28,13 @@ export function armarConfig(filas: { clave: string; valor: unknown }[] | null | 
       case "mensajes_whatsapp": {
         const v = f.valor as Partial<Configuracion["mensajes_whatsapp"]>;
         cfg.mensajes_whatsapp = { listo: v?.listo ?? cfg.mensajes_whatsapp.listo, en_camino: v?.en_camino ?? cfg.mensajes_whatsapp.en_camino };
+        break;
+      }
+      case "metodos_pago": {
+        // Si la fila viene vacía o con basura, se quedan los de por defecto:
+        // sin métodos no se puede cobrar y la pantalla quedaría inservible.
+        const validos = (Array.isArray(f.valor) ? f.valor : []).filter((v): v is MetodoPago => METODOS_PAGO.some((m) => m.valor === v));
+        if (validos.length > 0) cfg.metodos_pago = validos;
         break;
       }
     }
