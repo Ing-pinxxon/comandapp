@@ -8,10 +8,41 @@ const PUBLICAS = new Set(["/", "/demo", "/privacidad", "/terminos", "/registro",
 // redirigen al login, Google no puede leer el robots.txt ni el sitemap.
 const ARCHIVOS_PUBLICOS = ["/robots.txt", "/sitemap.xml", "/manifest.webmanifest", "/icon", "/apple-icon", "/opengraph-image"];
 
+/**
+ * Red de seguridad del regreso de Google y de los enlaces del correo.
+ *
+ * Cuando la «Site URL» de Supabase no coincide con la ruta de retorno que pide
+ * la app, Supabase suelta el código en la raíz del sitio (`/?code=…`) en vez de
+ * en `/auth/callback`. Ahí no hay nadie que lo canjee y el usuario se queda sin
+ * sesión, viendo la portada como si nada hubiera pasado.
+ *
+ * Esto lo reencamina a `/auth/callback`, que sí sabe qué hacer con él. Lo
+ * correcto sigue siendo arreglar la configuración de Supabase; esto evita que
+ * una configuración a medias deje a alguien trancado.
+ */
+function reencaminarAcceso(request: NextRequest): NextResponse | null {
+  const url = request.nextUrl;
+  const ruta = url.pathname;
+  if (ruta.startsWith("/auth/") || ruta.startsWith("/api/")) return null;
+
+  const hayCodigo = url.searchParams.has("code");
+  const hayEnlaceCorreo = url.searchParams.has("token_hash") && url.searchParams.has("type");
+  if (!hayCodigo && !hayEnlaceCorreo) return null;
+
+  const destino = url.clone();
+  destino.pathname = "/auth/callback";
+  // Si cayó en una ruta concreta, se vuelve a ella después de iniciar sesión
+  if (!destino.searchParams.has("volver") && ruta !== "/") destino.searchParams.set("volver", ruta);
+  return NextResponse.redirect(destino);
+}
+
 // Refresca la sesión de Supabase en cada petición y protege las rutas.
 // Chequeo optimista (solo cookie/JWT). Negocio, empleado y superadmin se validan en los layouts.
 export async function proxy(request: NextRequest) {
   if (ARCHIVOS_PUBLICOS.some((a) => request.nextUrl.pathname.startsWith(a))) return NextResponse.next({ request });
+
+  const reencaminado = reencaminarAcceso(request);
+  if (reencaminado) return reencaminado;
 
   let respuesta = NextResponse.next({ request });
 
