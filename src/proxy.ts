@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 // Rutas que se pueden ver sin sesión
-const PUBLICAS = new Set(["/", "/demo", "/registro", "/login", "/recuperar", "/auth/callback", "/auth/cambiar-clave"]);
+const PUBLICAS = new Set(["/", "/demo", "/privacidad", "/terminos", "/registro", "/login", "/recuperar", "/auth/callback", "/auth/cambiar-clave"]);
 
 // Archivos que piden los buscadores y el navegador. Nunca llevan sesión: si se
 // redirigen al login, Google no puede leer el robots.txt ni el sitemap.
