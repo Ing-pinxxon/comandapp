@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { enDireccionPrincipal } from "@/lib/sitio";
 
 // Rutas que se pueden ver sin sesión
 const PUBLICAS = new Set(["/", "/demo", "/privacidad", "/terminos", "/registro", "/login", "/recuperar", "/auth/callback", "/auth/cambiar-clave"]);
@@ -19,6 +20,9 @@ const ARCHIVOS_PUBLICOS = ["/robots.txt", "/sitemap.xml", "/manifest.webmanifest
  * Esto lo reencamina a `/auth/callback`, que sí sabe qué hacer con él. Lo
  * correcto sigue siendo arreglar la configuración de Supabase; esto evita que
  * una configuración a medias deje a alguien trancado.
+ *
+ * Lo mismo con los errores (`error_description`, p. ej. si se cancela en Google):
+ * mejor el aviso en el login que la portada como si nada hubiera pasado.
  */
 function reencaminarAcceso(request: NextRequest): NextResponse | null {
   const url = request.nextUrl;
@@ -27,7 +31,8 @@ function reencaminarAcceso(request: NextRequest): NextResponse | null {
 
   const hayCodigo = url.searchParams.has("code");
   const hayEnlaceCorreo = url.searchParams.has("token_hash") && url.searchParams.has("type");
-  if (!hayCodigo && !hayEnlaceCorreo) return null;
+  const hayError = url.searchParams.has("error_description");
+  if (!hayCodigo && !hayEnlaceCorreo && !hayError) return null;
 
   const destino = url.clone();
   destino.pathname = "/auth/callback";
@@ -39,6 +44,13 @@ function reencaminarAcceso(request: NextRequest): NextResponse | null {
 // Refresca la sesión de Supabase en cada petición y protege las rutas.
 // Chequeo optimista (solo cookie/JWT). Negocio, empleado y superadmin se validan en los layouts.
 export async function proxy(request: NextRequest) {
+  // Primero, a la dirección principal: ahí están las cookies de la sesión y la
+  // llave del regreso de Google. Si Supabase devolvió a alguien a otra dirección
+  // con `?code=…`, el código viaja intacto y se canjea en la principal.
+  const host = request.headers.get("x-forwarded-host") ?? request.headers.get("host");
+  const principal = enDireccionPrincipal(host, request.nextUrl);
+  if (principal) return NextResponse.redirect(principal);
+
   if (ARCHIVOS_PUBLICOS.some((a) => request.nextUrl.pathname.startsWith(a))) return NextResponse.next({ request });
 
   const reencaminado = reencaminarAcceso(request);

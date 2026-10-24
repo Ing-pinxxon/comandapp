@@ -11,6 +11,38 @@ export function sitioUrl(): string {
   return "http://localhost:3000";
 }
 
+/**
+ * La misma ruta, pero en la dirección principal del sitio.
+ *
+ * Vercel publica la producción en varias direcciones a la vez: la principal, la
+ * del equipo (`comandapp-ing-pinxxons-projects.vercel.app`) y la propia de cada
+ * despliegue. La sesión y la llave con la que vuelve Google son cookies de una
+ * sola dirección: si se empieza en una y se termina en otra, la persona queda
+ * sin sesión y sin saber por qué.
+ *
+ * `host` es la dirección que pidió el navegador (cabecera Host), no la de
+ * `request.nextUrl`: esa puede ser la interna del servidor.
+ *
+ * Devuelve null si no hay que mover nada: ya se está en la principal, o no es
+ * producción (en local y en las vistas previas de Vercel cada uno usa la suya).
+ */
+export function enDireccionPrincipal(host: string | null, url: Pick<URL, "pathname" | "search">): URL | null {
+  if (process.env.VERCEL_ENV !== "production" || !host) return null;
+  const principal = new URL(sitioUrl());
+  if (host.toLowerCase() === principal.host) return null;
+  return new URL(`${url.pathname}${url.search}`, principal);
+}
+
+/**
+ * El `?volver=` del login, solo si es una ruta de Comandapp. Sin esto, un enlace
+ * con `volver=https://otro-sitio` mandaría a la persona afuera justo después de
+ * iniciar sesión. `//` y `/\` también son otro sitio para el navegador.
+ */
+export function rutaInterna(ruta: string | null, porDefecto = "/comandas"): string {
+  if (!ruta || !ruta.startsWith("/") || ruta.startsWith("//") || ruta.startsWith("/\\")) return porDefecto;
+  return ruta;
+}
+
 /** WhatsApp de contacto de Comandapp: el personal de Daniel, no el de un negocio cliente */
 export const WHATSAPP_VENTAS = "573147167595";
 
