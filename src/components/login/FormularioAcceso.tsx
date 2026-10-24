@@ -6,6 +6,7 @@ import { useState } from "react";
 import { LogIn, Mail, UserPlus } from "lucide-react";
 import { supabaseNavegador } from "@/lib/supabase/client";
 import { mensajeError } from "@/lib/datos";
+import { rutaInterna } from "@/lib/sitio";
 import { Aviso } from "@/components/ui/Aviso";
 import { Logotipo } from "@/components/ui/Logotipo";
 
@@ -16,6 +17,18 @@ const TITULOS: Record<Modo, { titulo: string; sub: string }> = {
   registro: { titulo: "Crea tu cuenta", sub: "Gratis. En dos minutos tu negocio está tomando pedidos." },
   recuperar: { titulo: "Recuperar contraseña", sub: "Te enviamos un enlace al correo para crear una nueva." },
 };
+
+// Por qué alguien volvió de Google o del enlace del correo sin sesión (lo manda /auth/callback)
+const ERRORES_REGRESO: Record<string, string> = {
+  enlace: "El enlace no es válido o ya venció. Pide uno nuevo.",
+  acceso: "No se pudo completar el inicio de sesión. Vuelve a intentarlo.",
+  navegador:
+    "No pudimos terminar de iniciar sesión en este navegador. Inténtalo otra vez desde aquí. Si abriste el correo de confirmación en otro equipo, tu cuenta ya quedó activa: inicia sesión.",
+};
+
+function errorRegreso(codigo: string | null): string | null {
+  return codigo && Object.hasOwn(ERRORES_REGRESO, codigo) ? ERRORES_REGRESO[codigo] : null;
+}
 
 function traducir(msg: string): string {
   const m = msg.toLowerCase();
@@ -30,11 +43,11 @@ function traducir(msg: string): string {
 export function FormularioAcceso({ modo }: { modo: Modo }) {
   const router = useRouter();
   const params = useSearchParams();
-  const volver = params.get("volver") || "/comandas";
+  const volver = rutaInterna(params.get("volver"));
   const [email, setEmail] = useState("");
   const [clave, setClave] = useState("");
   const [cargando, setCargando] = useState(false);
-  const [error, setError] = useState<string | null>(params.get("error") === "enlace" ? "El enlace no es válido o ya venció. Pide uno nuevo." : null);
+  const [error, setError] = useState<string | null>(errorRegreso(params.get("error")));
   const [aviso, setAviso] = useState<string | null>(null);
   const t = TITULOS[modo];
 

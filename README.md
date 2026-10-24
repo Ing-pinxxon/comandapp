@@ -39,7 +39,10 @@ Daniel, como dueño de la plataforma, ve todos los negocios en `/plataforma` y p
    7. `supabase/07_arreglo_pin.sql` ← los PIN usan `gen_salt` de pgcrypto, que en Supabase vive en el esquema `extensions`. Este script se lo indica a las cuatro funciones que lo necesitan.
    8. `supabase/08_costos.sql` ← agrega el **costo** de cada producto y lo congela en cada venta, que es lo que permite ver la ganancia en el panel.
 3. **Authentication → Providers → Email:** activo, con **"Confirm email" activado**.
-4. **Authentication → URL Configuration:** *Site URL* = la URL de la app (en local `http://localhost:3000`), y en *Redirect URLs* agrega `http://localhost:3000/auth/callback` y la de producción (`https://tu-dominio/auth/callback`).
+4. **Authentication → URL Configuration:**
+   - *Site URL* = la **dirección principal** de producción, la misma de `NEXT_PUBLIC_SITE_URL` (hoy `https://comandapp-co.vercel.app`). No la del equipo (`comandapp-ing-pinxxons-projects.vercel.app`) ni la de un despliegue.
+   - *Redirect URLs*: `https://comandapp-co.vercel.app/**` y `http://localhost:3000/**`. Con `**` al final: la app vuelve a `/auth/callback?volver=…` y una dirección sin comodín no coincide con esos parámetros.
+   - Si la dirección de regreso no está permitida, Supabase manda a la persona a la *Site URL*. Si esa es otra dirección, Google "más o menos funciona": falla al primer intento y entra al segundo. Ver §3.
 5. **Google (opcional pero recomendado):**
    1. En [console.cloud.google.com](https://console.cloud.google.com) → APIs y servicios → Credenciales → **Crear credenciales → ID de cliente OAuth** (tipo *Aplicación web*).
    2. En *URI de redirección autorizados* pega la URL que muestra Supabase en **Authentication → Providers → Google** (termina en `/auth/v1/callback`).
@@ -55,7 +58,7 @@ Copia `.env.local.example` a `.env.local` y completa:
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase → Project Settings → API |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase → Project Settings → API (anon public) |
 | `GEMINI_API_KEY` | [aistudio.google.com/apikey](https://aistudio.google.com/apikey). Solo servidor: no lleva `NEXT_PUBLIC_`. |
-| `NEXT_PUBLIC_SITE_URL` | Opcional. La dirección pública del sitio, sin barra final (`https://comandapp.co`). Si falta, se usa sola la URL de producción de Vercel y, en local, `http://localhost:3000`. |
+| `NEXT_PUBLIC_SITE_URL` | Recomendada. La dirección principal del sitio, sin barra final (hoy `https://comandapp-co.vercel.app`; con dominio propio, `https://comandapp.co`). En producción todo se manda a esta dirección (§3). Si falta, se usa sola la URL de producción de Vercel y, en local, `http://localhost:3000`. |
 
 ### 2.3 Correr en el PC
 
@@ -76,8 +79,10 @@ En desarrollo hay tres páginas de apoyo que no existen en producción: `/vista-
 
 1. El repositorio ya está en GitHub (`Ing-pinxxon/comandapp`). En [vercel.com](https://vercel.com) → **Add New Project** → importa el repo.
 2. **Environment Variables:** `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `GEMINI_API_KEY`.
-3. Deploy. Luego en Supabase → Authentication → URL Configuration pon la URL de Vercel como *Site URL* y agrega `https://…vercel.app/auth/callback` a *Redirect URLs*.
+3. Deploy. Luego en Supabase → Authentication → URL Configuration pon la dirección principal como *Site URL* y agrega `https://…/**` a *Redirect URLs* (detalles en §2.1, paso 4).
 4. En la tablet, abre la URL y agrégala a la pantalla de inicio.
+
+**Una sola dirección.** Vercel publica la producción en varias direcciones (la principal, la del equipo `comandapp-ing-pinxxons-projects.vercel.app` y la de cada despliegue). La sesión y la llave con la que vuelve Google son cookies de una sola dirección, así que `src/proxy.ts` manda toda visita de producción a la principal (`sitioUrl()`), con la ruta y los parámetros intactos. Eso también rescata el regreso de Google cuando Supabase lo suelta en otra dirección. Las vistas previas y el PC no se tocan. Quien tenía la app abierta en otra dirección tiene que iniciar sesión una vez en la principal.
 
 ---
 
@@ -101,7 +106,7 @@ Si faltan variables el bot sigue funcionando igual y solo deja un aviso en sus r
 
 La portada (`/`) y la demo (`/demo`) son las dos páginas hechas para buscadores. Todo lo demás —cola, panel, onboarding— está bloqueado en `robots.txt`: son pantallas privadas de cada negocio.
 
-- **Dirección del sitio.** Todo (canónicas, sitemap, imagen para compartir) sale de `sitioUrl()` en `src/lib/sitio.ts`. **Al comprar el dominio basta con poner `NEXT_PUBLIC_SITE_URL` en Vercel y volver a desplegar**; no hay direcciones escritas a mano en el código. Después: en Google Search Console, agrega la propiedad y envía `https://tu-dominio/sitemap.xml`.
+- **Dirección del sitio.** Todo (canónicas, sitemap, imagen para compartir) sale de `sitioUrl()` en `src/lib/sitio.ts`. **Al comprar el dominio basta con poner `NEXT_PUBLIC_SITE_URL` en Vercel, volver a desplegar y cambiar la *Site URL* y las *Redirect URLs* de Supabase** (§2.1); no hay direcciones escritas a mano en el código. Después: en Google Search Console, agrega la propiedad y envía `https://tu-dominio/sitemap.xml`.
 - **Archivos que genera Next solo:** `/robots.txt`, `/sitemap.xml`, `/manifest.webmanifest`, `/icon`, `/apple-icon` y `/opengraph-image` (la imagen de 1200×630 que se ve al compartir el enlace). `src/proxy.ts` los deja pasar sin sesión; si algún día vuelven a redirigir al login, Google deja de leer el sitio.
 - **Datos estructurados:** la portada incluye `SoftwareApplication` y `FAQPage` (las mismas preguntas que se ven en pantalla, en `src/components/landing/contenido.ts`). Si cambias una pregunta, cambia en los dos lados a la vez porque salen de la misma lista.
 - **Textos:** la app **no maneja mesas ni meseros** y así se dice en las preguntas frecuentes. Es a propósito: es mejor perder una visita que ganar un cliente decepcionado.
