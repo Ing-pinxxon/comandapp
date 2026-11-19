@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 /** Solo para el dueño de Comandapp: todos los negocios registrados */
 export default async function PaginaPlataforma() {
   const sesion = await sesionActual();
-  if (!sesion) redirect("/login?volver=/plataforma");
+  if (!sesion) redirect("/");
   if (!(await esSuperadmin())) redirect("/comandas");
   return (
     <main className="mx-auto max-w-6xl p-4 sm:p-6">

@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 
 export default async function LayoutAdmin({ children }: { children: React.ReactNode }) {
   const sesion = await sesionActual();
-  if (!sesion) redirect("/login");
+  if (!sesion) redirect("/");
   const negocio = await negocioActual();
   if (!negocio) redirect("/onboarding");
   // El panel es solo para el dueño: si no se ha identificado con su PIN, o es un empleado, no entra.

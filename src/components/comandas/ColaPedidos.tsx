@@ -149,7 +149,7 @@ export function ColaPedidos({ inicial, catalogoInicial, empleado, demo = false }
 
   async function salir() {
     await cerrarSesion();
-    router.replace("/login");
+    router.replace("/");
     router.refresh();
   }
 

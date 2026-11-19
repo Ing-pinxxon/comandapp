@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 export default async function PaginaQuien({ searchParams }: { searchParams: Promise<{ volver?: string }> }) {
   const sesion = await sesionActual();
-  if (!sesion) redirect("/login");
+  if (!sesion) redirect("/");
   const negocio = await negocioActual();
   if (!negocio) redirect("/onboarding");
   const { volver } = await searchParams;

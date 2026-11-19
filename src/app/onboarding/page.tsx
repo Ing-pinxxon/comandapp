@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 export default async function PaginaOnboarding({ searchParams }: { searchParams: Promise<{ nuevo?: string }> }) {
   const sesion = await sesionActual();
-  if (!sesion) redirect("/login?volver=/onboarding");
+  if (!sesion) redirect("/");
   const { nuevo } = await searchParams;
   // Quien ya tiene negocio va directo a la tablet, salvo que quiera crear otro
   const negocios = await misNegociosServidor();

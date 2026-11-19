@@ -168,7 +168,7 @@ export function ElegirEmpleado({ negocio, negocios, empleados, volver }: Props) 
       <div className="mt-6 flex flex-wrap justify-center gap-2 text-sm">
         <Link href="/admin/equipo" className="btn min-h-10 bg-panel-2 px-3 text-texto-suave"><UserPlus className="size-4" /> Administrar equipo</Link>
         <Link href="/onboarding?nuevo=1" className="btn min-h-10 bg-panel-2 px-3 text-texto-suave"><Store className="size-4" /> Otro negocio</Link>
-        <button type="button" onClick={async () => { await cerrarSesion(); router.replace("/login"); router.refresh(); }} className="btn min-h-10 bg-panel-2 px-3 text-texto-suave">
+        <button type="button" onClick={async () => { await cerrarSesion(); router.replace("/"); router.refresh(); }} className="btn min-h-10 bg-panel-2 px-3 text-texto-suave">
           <LogOut className="size-4" /> Cerrar sesión
         </button>
       </div>

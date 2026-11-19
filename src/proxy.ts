@@ -79,10 +79,11 @@ export async function proxy(request: NextRequest) {
   if (ruta.startsWith("/vista-previa") && process.env.NODE_ENV === "development") return respuesta;
   if (ruta.startsWith("/api/")) return respuesta; // las rutas API validan la sesión por su cuenta
 
+  // Sin sesión, cualquier enlace lleva a la portada: desde ahí se entra o se crea la cuenta
   if (!autenticado && !PUBLICAS.has(ruta)) {
     const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    url.searchParams.set("volver", ruta);
+    url.pathname = "/";
+    url.search = "";
     return NextResponse.redirect(url);
   }
   // Quien ya tiene sesión no ve la portada ni el registro: va directo a su cola.
