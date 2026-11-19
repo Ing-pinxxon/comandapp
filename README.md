@@ -18,6 +18,8 @@ Pantalla de comandas para negocios de comida. Cada negocio crea su cuenta, sube 
 5. En la tablet, `/quien`: cada empleado toca su nombre y escribe su PIN. La cola queda en `/comandas`.
 6. El dueño entra al **panel** (`/admin`) con su PIN: resumen, pedidos, clientes, menú, cargos, equipo, mi negocio y configuración.
 
+Quien abre cualquier enlace de la app sin sesión (o cierra sesión) llega a la **portada** (`/`), y desde ahí inicia sesión o crea la cuenta. Con sesión, la portada lo manda directo a su cola.
+
 Los **cargos** (domicilio, empaque, propina…) se definen por negocio en `/admin/cargos`: por pedido o por cada unidad de ciertas categorías, y opcionalmente solo para domicilios. No hay descuentos.
 
 Daniel, como dueño de la plataforma, ve todos los negocios en `/plataforma` y puede desactivar cuentas.
@@ -107,7 +109,7 @@ Si faltan variables el bot sigue funcionando igual y solo deja un aviso en sus r
 La portada (`/`) y la demo (`/demo`) son las dos páginas hechas para buscadores. Todo lo demás —cola, panel, onboarding— está bloqueado en `robots.txt`: son pantallas privadas de cada negocio.
 
 - **Dirección del sitio.** Todo (canónicas, sitemap, imagen para compartir) sale de `sitioUrl()` en `src/lib/sitio.ts`. **Al comprar el dominio basta con poner `NEXT_PUBLIC_SITE_URL` en Vercel, volver a desplegar y cambiar la *Site URL* y las *Redirect URLs* de Supabase** (§2.1); no hay direcciones escritas a mano en el código. Después: en Google Search Console, agrega la propiedad y envía `https://tu-dominio/sitemap.xml`.
-- **Archivos que genera Next solo:** `/robots.txt`, `/sitemap.xml`, `/manifest.webmanifest`, `/icon`, `/apple-icon` y `/opengraph-image` (la imagen de 1200×630 que se ve al compartir el enlace). `src/proxy.ts` los deja pasar sin sesión; si algún día vuelven a redirigir al login, Google deja de leer el sitio.
+- **Archivos que genera Next solo:** `/robots.txt`, `/sitemap.xml`, `/manifest.webmanifest`, `/icon`, `/apple-icon` y `/opengraph-image` (la imagen de 1200×630 que se ve al compartir el enlace). `src/proxy.ts` los deja pasar sin sesión; si algún día vuelven a redirigir a la portada, Google deja de leer el sitio.
 - **Datos estructurados:** la portada incluye `SoftwareApplication` y `FAQPage` (las mismas preguntas que se ven en pantalla, en `src/components/landing/contenido.ts`). Si cambias una pregunta, cambia en los dos lados a la vez porque salen de la misma lista.
 - **Textos:** la app **no maneja mesas ni meseros** y así se dice en las preguntas frecuentes. Es a propósito: es mejor perder una visita que ganar un cliente decepcionado.
 - Aparecer en Google toma entre dos semanas y dos meses. Esto es la condición para lograrlo, no una garantía.

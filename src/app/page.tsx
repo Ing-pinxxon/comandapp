@@ -70,10 +70,13 @@ export default function Inicio() {
 
       <header className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4">
         <Logotipo />
-        <nav className="flex items-center gap-2">
-          <Link href="/demo" className="btn min-h-10 bg-transparent px-3 text-texto-suave">Ver demo</Link>
-          <Link href="/login" className="btn min-h-10 bg-transparent px-3 text-texto-suave">Iniciar sesión</Link>
-          <Link href="/registro" className="btn min-h-10 bg-negro px-4 text-white">Crear cuenta gratis</Link>
+        <nav className="flex items-center gap-1 sm:gap-2">
+          {/* En el celular no cabe todo: la demo tiene sus botones grandes más abajo */}
+          <Link href="/demo" className="btn min-h-10 bg-transparent px-3 text-texto-suave max-sm:hidden">Ver demo</Link>
+          <Link href="/login" className="btn min-h-10 bg-transparent px-2 text-texto-suave sm:px-3">Iniciar sesión</Link>
+          <Link href="/registro" className="btn min-h-10 bg-negro px-3 text-white sm:px-4">
+            <span>Crear cuenta<span className="max-sm:hidden"> gratis</span></span>
+          </Link>
         </nav>
       </header>
 
