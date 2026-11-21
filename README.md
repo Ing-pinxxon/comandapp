@@ -22,6 +22,8 @@ Quien abre cualquier enlace de la app sin sesión (o cierra sesión) llega a la 
 
 Los **cargos** (domicilio, empaque, propina…) se definen por negocio en `/admin/cargos`: por pedido o por cada unidad de ciertas categorías, y opcionalmente solo para domicilios. No hay descuentos.
 
+Los **combos** se prenden por categoría en `/admin/productos` (casilla *Se puede pedir en combo* al lado del nombre de cada categoría). Con la casilla marcada, cada producto de esa categoría ofrece *Sin combo* o *Combo* al tomar el pedido. El precio del combo es el **precio combo** del producto o, si está vacío, el precio más el *extra por combo* de `/admin/configuracion`.
+
 Daniel, como dueño de la plataforma, ve todos los negocios en `/plataforma` y puede desactivar cuentas.
 
 ---

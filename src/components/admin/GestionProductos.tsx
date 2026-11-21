@@ -4,12 +4,12 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Camera, Eye, EyeOff, FolderPlus, Plus, Save, Sparkles } from "lucide-react";
 import { supabaseNavegador } from "@/lib/supabase/client";
-import { cargarCatalogo, cargarPedidosRango, crearCategoria, mensajeError } from "@/lib/datos";
+import { actualizarCategoria, cargarCatalogo, cargarPedidosRango, crearCategoria, mensajeError } from "@/lib/datos";
 import { useNegocio } from "@/components/NegocioProvider";
 import type { Catalogo } from "@/lib/catalogo";
 import { productosPersonalizados, type ProductoTop } from "@/lib/analitica";
 import { fechaISOBogota, formatoCOP, sumarDias } from "@/lib/fechas";
-import type { Producto } from "@/lib/tipos";
+import type { Categoria, Producto } from "@/lib/tipos";
 import { Aviso } from "@/components/ui/Aviso";
 import { Modal } from "@/components/ui/Modal";
 
@@ -46,6 +46,7 @@ export function GestionProductos() {
   const [nuevo, setNuevo] = useState<Borrador | null>(null);
   const [nuevaCategoria, setNuevaCategoria] = useState<{ nombre: string; emoji: string; permite_combo: boolean } | null>(null);
   const [candidatos, setCandidatos] = useState<ProductoTop[]>([]);
+  const [cambiandoCombo, setCambiandoCombo] = useState<number | null>(null);
 
   const recargar = useCallback(async () => {
     try {
@@ -144,6 +145,24 @@ export function GestionProductos() {
     avisarOk("Producto agregado al menú");
   }
 
+  /** Prende o apaga el combo de una categoría. Se ve al abrir el siguiente pedido. */
+  async function cambiarCombo(c: Categoria) {
+    const permite = !c.permite_combo;
+    const marcar = (valor: boolean) =>
+      setCatalogo((cat) => (cat ? { ...cat, categorias: cat.categorias.map((k) => (k.id === c.id ? { ...k, permite_combo: valor } : k)) } : cat));
+    setCambiandoCombo(c.id);
+    marcar(permite);
+    try {
+      await actualizarCategoria(c.id, { permite_combo: permite });
+      avisarOk(permite ? `${c.nombre} ya se puede pedir en combo` : `${c.nombre} ya no se ofrece en combo`);
+    } catch (e) {
+      marcar(c.permite_combo);
+      setError(mensajeError(e));
+    } finally {
+      setCambiandoCombo(null);
+    }
+  }
+
   async function crearCat() {
     if (!nuevaCategoria || !nuevaCategoria.nombre.trim()) return;
     try {
@@ -191,10 +210,21 @@ export function GestionProductos() {
 
       {porCategoria.map(({ categoria, productos }) => (
         <section key={categoria.id} className="tarjeta overflow-x-auto p-4">
-          <h2 className="mb-3 text-lg font-extrabold">
-            {categoria.emoji} {categoria.nombre}
-            <span className="ml-2 text-xs font-normal text-texto-suave">{categoria.permite_combo ? "· permite combo" : ""}</span>
-          </h2>
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-lg font-extrabold">
+              {categoria.emoji} {categoria.nombre}
+            </h2>
+            <label className="flex cursor-pointer items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                className="size-5"
+                checked={categoria.permite_combo}
+                disabled={cambiandoCombo === categoria.id}
+                onChange={() => void cambiarCombo(categoria)}
+              />
+              Se puede pedir en combo
+            </label>
+          </div>
           <table className="w-full text-sm">
             <thead className="text-left text-texto-suave">
               <tr>

@@ -112,7 +112,7 @@ export function ItemPedido({ item, config, abierto, destacado = false, onAlterna
           {item.permite_combo && (
             <div className="grid grid-cols-2 gap-2">
               <button type="button" onClick={() => onCambiar({ ...item, es_combo: false })} className={`btn ${!item.es_combo ? "bg-marca text-black" : "bg-panel"}`}>
-                Sola · {formatoCOP(item.precio_base)}
+                Sin combo · {formatoCOP(item.precio_base)}
               </button>
               <button type="button" onClick={() => onCambiar({ ...item, es_combo: true })} className={`btn ${item.es_combo ? "bg-marca text-black" : "bg-panel"}`}>
                 🍱 Combo · {formatoCOP(item.precio_combo ?? item.precio_base + config.extra_combo)}
